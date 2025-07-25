@@ -128,8 +128,8 @@ def get_menu(
             price=item.price,
             category=item.category,
             image_url=item.image_url,
-            ingredients=json.loads(item.ingredients) if item.ingredients else [],
-            size_options=json.loads(item.size_options) if item.size_options else [],
+            ingredients=item.ingredients if item.ingredients else [],
+            size_options=item.size_options if item.size_options else [],
             available=item.available
         ))
     
