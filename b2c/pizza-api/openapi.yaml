@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Pizza Shack API
-  description: >-
+  description: >
     Pizza ordering API with IETF Agent Authentication support for WSO2 Choreo deployment.
     Supports both agent tokens and OBO tokens for secure pizza ordering.
   license:
@@ -21,6 +21,7 @@ tags:
     description: Order management operations
   - name: system
     description: System status and health checks
+
 paths:
   /:
     get:
@@ -81,7 +82,7 @@ paths:
           description: Filter by price range
           schema:
             type: string
-            enum: [budget, mid-range, premium]
+            enum: [budget, mid_range, premium]
       responses:
         "200":
           description: Successful operation
@@ -187,8 +188,6 @@ paths:
                   database:
                     type: string
 
-# Admin endpoints removed - not used by current pizza-shack frontend
-
 components:
   securitySchemes:
     BearerAuth:
@@ -197,7 +196,7 @@ components:
       bearerFormat: JWT
       description: |
         Asgardeo JWT token (Agent or OBO token) with scope-based authorization.
-        
+
         Available scopes:
         - order:read - Read access to user orders
         - order:write - Create and modify orders
@@ -258,6 +257,13 @@ components:
             $ref: "#/components/schemas/OrderItem"
         customer_info:
           type: object
+          properties:
+            name:
+              type: string
+            address:
+              type: string
+            contact_number:
+              type: string
 
     OrderResponse:
       type: object
@@ -272,6 +278,8 @@ components:
           type: string
         items:
           type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
         total_amount:
           type: number
           format: float
