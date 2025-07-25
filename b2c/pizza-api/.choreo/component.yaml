@@ -5,7 +5,7 @@ endpoints:
   - name: pizza_rest_endpoint
     displayName: Pizza Shack REST Endpoint
     service:
-      basePath: /pizza-api
+      basePath: /
       port: 8000
     type: REST
     networkVisibilities: 
