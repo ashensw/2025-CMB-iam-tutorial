@@ -1,0 +1,379 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800;900&display=swap');
+
+:root {
+  /* Modern Typography System */
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.7;
+  font-weight: 400;
+
+  /* Deep Greens & Blues with Earthy Warmth */
+  --primary: #2A4B3D;
+  --primary-hover: #1E3A2D;
+  --primary-light: #E6F3EE;
+  --primary-dark: #1A3228;
+  
+  --secondary: #D96F32;
+  --secondary-hover: #CC6633;
+  --secondary-light: #FDF5E6;
+  --secondary-dark: #B85A28;
+  
+  --accent-purple: #8B5CF6;
+  --accent-pink: #EC4899;
+  --accent-green: #4A7C59;
+  --accent-orange: #D96F32;
+  --accent-blue: #3B82F6;
+  --accent-mint: #E6F3EE;
+  --accent-sky: #EAF5FF;
+  
+  /* Fresh & Natural Neutral System */
+  --gray-50: #FFFFFF;
+  --gray-100: #F0F4F7;
+  --gray-200: #E6F3EE;
+  --gray-300: #EAF5FF;
+  --gray-400: #A8B5C1;
+  --gray-500: #7B8794;
+  --gray-600: #5A6B7A;
+  --gray-700: #3E4C5B;
+  --gray-800: #1E3A4B;
+  --gray-900: #2A4B3D;
+  
+  /* Pure Colors */
+  --white: #FFFFFF;
+  --black: #000000;
+  
+  /* Semantic Colors */
+  --background-primary: var(--white);
+  --background-secondary: var(--gray-50);
+  --background-tertiary: var(--gray-100);
+  --background-glass: rgba(255, 255, 255, 0.9);
+  --background-glass-dark: rgba(230, 243, 238, 0.8);
+  --background-gradient: var(--primary);
+  --background-hero: var(--primary);
+  
+  --text-primary: #1E3A4B;
+  --text-secondary: #2A4B3D;
+  --text-muted: #5A6B7A;
+  --text-light: var(--white);
+  --text-accent: var(--primary);
+  
+  /* Earthy Warmth Colors */
+  --accent-cream: #FFEFD5;
+  --accent-warm-cream: #FDF5E6;
+  --accent-terracotta: #CC6633;
+  
+  /* Fix missing primary-orange references */
+  --primary-orange: var(--primary);
+  --primary-orange-hover: var(--primary-hover);
+  
+  --border-light: var(--gray-200);
+  --border-medium: var(--gray-300);
+  --border-glass: rgba(255, 255, 255, 0.2);
+  
+  /* Modern Shadows & Glass Effects */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.15);
+  --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.15);
+  --shadow-neu-light: 6px 6px 12px rgba(0, 0, 0, 0.1), -6px -6px 12px rgba(255, 255, 255, 0.8);
+  --shadow-neu-dark: inset 2px 2px 5px rgba(0, 0, 0, 0.1), inset -2px -2px 5px rgba(255, 255, 255, 0.8);
+  
+  /* Border Radius System */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 50%;
+  
+  /* Spacing System */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem;  /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem;    /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem;  /* 24px */
+  --space-8: 2rem;    /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem;   /* 48px */
+  --space-16: 4rem;   /* 64px */
+  --space-20: 5rem;   /* 80px */
+  
+  /* Enhanced Typography Scale */
+  --text-xs: 0.75rem;   /* 12px */
+  --text-sm: 0.875rem;  /* 14px */
+  --text-base: 1rem;    /* 16px */
+  --text-lg: 1.125rem;  /* 18px */
+  --text-xl: 1.25rem;   /* 20px */
+  --text-2xl: 1.5rem;   /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-4xl: 2.5rem;   /* 40px */
+  --text-5xl: 3.25rem;  /* 52px */
+  --text-6xl: 4rem;     /* 64px */
+  
+  /* Price Typography */
+  --price-sm: 1.125rem; /* 18px */
+  --price-md: 1.5rem;   /* 24px */
+  --price-lg: 2rem;     /* 32px */
+  --price-xl: 2.5rem;   /* 40px */
+  
+  /* Legacy Support */
+  --primary-color: var(--primary);
+  --secondary-color: var(--secondary);
+  --accent-color: var(--accent-gold);
+  --card-background: var(--background-glass);
+  --text-dark: var(--text-primary);
+  --shadow: var(--shadow-lg);
+  
+  /* Glass Effects */
+  --blur-sm: blur(4px);
+  --blur-md: blur(8px);
+  --blur-lg: blur(16px);
+
+  color: var(--text-primary);
+  background: var(--background-secondary);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: var(--primary-orange);
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+a:hover {
+  color: var(--primary-orange-hover);
+}
+a:focus {
+  outline: 2px solid var(--primary-orange);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--gray-50);
+  line-height: 1.7;
+  -webkit-text-size-adjust: 100%;
+  font-feature-settings: 'liga' on, 'kern' on;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Enhanced Typography Styles */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+  margin: 0 0 var(--space-4) 0;
+  color: var(--text-primary);
+  font-feature-settings: 'liga' on, 'kern' on;
+}
+
+h1 {
+  font-size: var(--text-5xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+h2 {
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+}
+
+h3 {
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+h4 {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+}
+
+h5 {
+  font-size: var(--text-xl);
+  font-weight: 500;
+}
+
+h6 {
+  font-size: var(--text-lg);
+  font-weight: 500;
+}
+
+p {
+  margin: 0 0 var(--space-4) 0;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* Price Styling */
+.price {
+  font-weight: 700;
+  color: var(--accent-green);
+  font-feature-settings: 'tnum' on;
+}
+
+.price-sm { font-size: var(--price-sm); }
+.price-md { font-size: var(--price-md); }
+.price-lg { font-size: var(--price-lg); }
+.price-xl { font-size: var(--price-xl); }
+
+/* Modern Button System with Glassmorphism */
+button {
+  border-radius: var(--radius-lg);
+  border: none;
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--text-base);
+  font-weight: 600;
+  font-family: inherit;
+  background: var(--primary);
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  line-height: 1;
+  white-space: nowrap;
+  backdrop-filter: var(--blur-sm);
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+button:hover::before {
+  left: 100%;
+}
+
+button:hover {
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-neu-dark);
+}
+
+button:focus,
+button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  background: var(--gray-300);
+  color: var(--gray-600);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Glass Button Variants */
+.btn-primary {
+  background: var(--primary);
+  backdrop-filter: var(--blur-sm);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-glass);
+}
+
+.btn-secondary {
+  background: var(--background-glass);
+  color: var(--text-primary);
+  border: 1px solid var(--border-glass);
+  backdrop-filter: var(--blur-md);
+  box-shadow: var(--shadow-neu-light);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--border-medium);
+  transform: translateY(-1px);
+}
+
+.btn-glass {
+  background: var(--background-glass);
+  color: var(--text-primary);
+  border: 1px solid var(--border-glass);
+  backdrop-filter: var(--blur-md);
+  box-shadow: var(--shadow-glass);
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.btn-ghost:hover {
+  background: var(--background-glass);
+  color: var(--text-primary);
+  backdrop-filter: var(--blur-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Button Sizes */
+.btn-sm {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+}
+
+.btn-lg {
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  border-radius: var(--radius-xl);
+}
+
+.btn-xl {
+  padding: var(--space-5) var(--space-10);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  border-radius: var(--radius-xl);
+}
+
+.btn-full {
+  width: 100%;
+}
+
+

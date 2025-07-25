@@ -69,7 +69,7 @@ def init_database():
         menu_items = [
             {
                 "name": "Tandoori Chicken",
-                "description": "Tender tandoori chicken, crisp bell peppers, onions, spiced tomato sauce",
+                "description": "Classic supreme tender tandoori chicken, crisp bell peppers, onions, spiced tomato sauce",
                 "price": 14.99,
                 "category": "specialty",
                 "image_url": "/images/tandoori_chicken.jpeg",
