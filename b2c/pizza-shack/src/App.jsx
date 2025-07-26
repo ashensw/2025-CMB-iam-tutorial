@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SignedIn, SignedOut, SignInButton, UserDropdown, useAsgardeo } from '@asgardeo/react';
 import ChatBot from './components/ChatBot';
 import OrderConfirmationModal from './components/OrderConfirmationModal';
 import MyOrders from './components/MyOrders';
 import cdpService from './services/cdpService';
 import profileStorage from './utils/profileStorage';
+import pizzaApiClient from './services/pizzaApiClient';
+import tokenManager from './services/tokenManager';
+import { debugTokenScopes, debugAsgardeoConfig } from './utils/tokenDebug';
 import './App.css';
 
 function App() {
@@ -33,14 +36,40 @@ function App() {
   const [hasSeenTooltip, setHasSeenTooltip] = useState(false);
   const [proactiveChatMessage, setProactiveChatMessage] = useState(null);
   const [chatInputValue, setChatInputValue] = useState('');
+  const [pizzaMenu, setPizzaMenu] = useState([]);
+  const [isMenuLoading, setIsMenuLoading] = useState(true);
+  const [menuError, setMenuError] = useState(null);
+  const menuFetchedRef = useRef(false);
 
-  // Fetch additional user info when authenticated
+  // Fetch additional user info and manage tokens when authenticated
   useEffect(() => {
     if (isSignedIn && !userInfo) {
       console.log('Basic user info:', user);
       setUserInfo(user);
+      
+      // Store token for API access and debug scopes
+      getAccessToken().then(token => {
+        if (token) {
+          tokenManager.storeToken(token, 3600); // 1 hour expiry
+          console.log('Token stored successfully');
+          
+          // Debug token scopes
+          console.log('🔍 Debugging token scopes...');
+          debugAsgardeoConfig();
+          const scopeInfo = debugTokenScopes(token);
+          
+          if (!scopeInfo.hasOrderRead || !scopeInfo.hasOrderWrite) {
+            console.warn('⚠️ Missing required Pizza API scopes!');
+            console.warn('Expected: order:read, order:write');
+            console.warn('Found pizza scopes:', scopeInfo.pizzaScopes);
+            console.warn('Please check Asgardeo application configuration');
+          }
+        }
+      }).catch(error => {
+        console.error('Failed to get access token:', error);
+      });
     }
-  }, [isSignedIn, userInfo, user]);
+  }, [isSignedIn, userInfo, user, getAccessToken]);
 
   // Function to load user profile and recommendations
   const loadUserProfile = async () => {
@@ -102,8 +131,69 @@ function App() {
     }
   }, [isSignedIn, isLoading]); // Use official hook values directly
 
+  useEffect(() => {
+    if (isMenuLoading) {
+      document.body.classList.add('menu-loading');
+    } else {
+      document.body.classList.remove('menu-loading');
+    }
+  }, [isMenuLoading]);
 
-  const pizzaMenu = [
+  // Fetch menu from Pizza API once on mount
+  useEffect(() => {
+    const fetchMenu = async () => {
+      // Prevent multiple fetches
+      if (menuFetchedRef.current) {
+        return;
+      }
+      
+      try {
+        setIsMenuLoading(true);
+        setMenuError(null);
+        console.log('🍕 Fetching menu from Pizza API...');
+        
+        // Try to get access token if user is signed in
+        let accessToken = null;
+        if (isSignedIn) {
+          try {
+            accessToken = await getAccessToken();
+            console.log('🔑 Using access token for menu fetch');
+          } catch (tokenError) {
+            console.warn('⚠️ Could not get access token, proceeding without auth:', tokenError);
+          }
+        }
+        
+        const menuData = await pizzaApiClient.getMenu(accessToken);
+        console.log('✅ Menu fetched successfully:', menuData);
+        
+        // Transform API data to match frontend format if needed
+        const transformedMenu = menuData.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: `${item.price}`,
+          img: item.image_url || item.image || `/images/${item.name.toLowerCase().replace(/ /g, '_')}.jpeg`,
+          desc: item.description || item.desc || 'Delicious pizza made with fresh ingredients'
+        }));
+        
+        setPizzaMenu(transformedMenu);
+        menuFetchedRef.current = true; // Mark as fetched
+      } catch (error) {
+        console.error('❌ Failed to fetch menu from API:', error);
+        console.log('📋 Using fallback menu data');
+        setMenuError(error.message);
+        setPizzaMenu(fallbackPizzaMenu);
+        menuFetchedRef.current = true; // Mark as fetched even on error
+      } finally {
+        setIsMenuLoading(false);
+      }
+    };
+
+    fetchMenu();
+  }, []); // Only run once on mount
+
+
+  // Fallback menu data (used if API fails)
+  const fallbackPizzaMenu = [
     { 
       id: 1,
       name: 'Tandoori Chicken', 
@@ -192,7 +282,7 @@ function App() {
 
   const getCartTotal = () => {
     return cart.reduce((total, item) => {
-      const price = parseFloat(item.price.replace('$', '').replace(',', ''));
+      const price = parseFloat(item.price);
       return total + (price * item.quantity);
     }, 0);
   };
@@ -204,6 +294,20 @@ function App() {
   const handleCheckout = async () => {
     if (isSignedIn) {
       try {
+        const accessToken = tokenManager.getAccessToken();
+        if (!accessToken) {
+          alert('Authentication expired. Please sign in again.');
+          signOut();
+          return;
+        }
+
+        // Transform cart data for Pizza API
+        const orderData = pizzaApiClient.transformCartToOrderData(cart, userInfo);
+        
+        // Place order via Pizza API
+        const apiOrder = await pizzaApiClient.createOrder(orderData, accessToken);
+        console.log('Order placed via Pizza API:', apiOrder);
+
         // Create/update CDP profile for authenticated user order
         const profileData = cdpService.formatOrderData(cart, userInfo);
         const createdProfile = await cdpService.createProfile(profileData);
@@ -214,27 +318,56 @@ function App() {
           // Reload recommendations after successful profile update for authenticated users
           loadUserProfile();
         }
+
+        // Show order confirmation modal with API order details
+        setOrderConfirmationData({
+          total: apiOrder.total_amount || getCartTotal().toFixed(2),
+          isAuthenticated: true,
+          userInfo: userInfo,
+          items: cart,
+          orderId: apiOrder.order_id || ('ORD-' + Date.now()),
+          apiOrderId: apiOrder.id
+        });
+        setShowOrderConfirmation(true);
+        setCart([]);
+        setIsCartOpen(false);
+        
+        // Auto-open chat after order placement
+        setTimeout(() => {
+          setProactiveChatMessage("Excellent choice! ✅ Your order is confirmed and our chefs are on it. I'll update you on its progress right here. Estimated delivery: 25-35 minutes.");
+          setIsChatOpen(true);
+        }, 3000);
+
       } catch (error) {
-        console.warn('CDP profile update failed for authenticated user (non-fatal):', error);
+        console.error('Order placement failed:', error);
+        alert(`Order failed: ${error.message}`);
+        
+        // Fallback to local order if API fails
+        try {
+          const profileData = cdpService.formatOrderData(cart, userInfo);
+          const createdProfile = await cdpService.createProfile(profileData);
+          
+          if (createdProfile && createdProfile.profile_id) {
+            profileStorage.storeProfileId(createdProfile.profile_id);
+            loadUserProfile();
+          }
+        } catch (profileError) {
+          console.warn('CDP profile update failed:', profileError);
+        }
+        
+        setOrderConfirmationData({
+          total: getCartTotal().toFixed(2),
+          isAuthenticated: true,
+          userInfo: userInfo,
+          items: cart,
+          orderId: 'ORD-LOCAL-' + Date.now(),
+          apiOrderId: null,
+          isOffline: true
+        });
+        setShowOrderConfirmation(true);
+        setCart([]);
+        setIsCartOpen(false);
       }
-      
-      // Show order confirmation modal
-      setOrderConfirmationData({
-        total: getCartTotal().toFixed(2),
-        isAuthenticated: true,
-        userInfo: userInfo,
-        items: cart,
-        orderId: 'ORD-' + Date.now()
-      });
-      setShowOrderConfirmation(true);
-      setCart([]);
-      setIsCartOpen(false);
-      
-      // Auto-open chat after order placement (with delay for modal to show first)
-      setTimeout(() => {
-        setProactiveChatMessage("Excellent choice! ✅ Your order is confirmed and our chefs are on it. I'll update you on its progress right here. Estimated delivery: 25-35 minutes.");
-        setIsChatOpen(true);
-      }, 3000);
     } else {
       setShowGuestCheckout(true);
     }
@@ -363,119 +496,149 @@ function App() {
           </div>
         </div>
       </header>
-
-
-      {/* Promotional Banner - Container Width - Only show on menu view */}
+      
+      {/* Main Content Area */}
+      {/* ─── MENU VIEW ───────────────────────────── */}
       {currentView === 'menu' && (
-        <div className="promo-banner">
-          <div className="promo-content">
-            <span className="promo-icon">🔥</span>
-            <span className="promo-text">Today's Special: Fresh Sri Lankan Flavors • Free Delivery on Orders $25+</span>
-          </div>
+        <div className="main-content-container">
+          {isMenuLoading ? (
+            // ─── Loading State: Only spinner and text ─────────────────────
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '400px',
+                flexDirection: 'column',
+                gap: '1rem',
+              }}
+            >
+              <div className="loading-spinner" />
+              <p style={{ color: 'var(--text-secondary)' }}>
+                Loading delicious pizzas...
+              </p>
+            </div>
+          ) : (
+            // ─── Loaded State: Banner, Header, Grid ──────────────────────
+            <>
+              {/* Promo Banner - Above everything */}
+              <div className="promo-banner">
+                <div className="promo-content">
+                  <span className="promo-icon">🔥</span>
+                  <span className="promo-text">
+                    Today's Special: Fresh Sri Lankan Flavors • Free Delivery on Orders $25+
+                  </span>
+                </div>
+              </div>
+
+              {/* Menu Section Header */}
+              <div className="menu-section-header">
+                <SignedIn>
+                  {recommendations.length > 0 ? (
+                    <div className="personalized-section">
+                      <h1 className="menu-page-title">🍕 Your Picks</h1>
+                    </div>
+                  ) : (
+                    <h1 className="menu-page-title">Our Menu</h1>
+                  )}
+                </SignedIn>
+                <SignedOut>
+                  <h1 className="menu-page-title">Our Menu</h1>
+                </SignedOut>
+              </div>
+
+              {/* Menu Grid */}
+              <div className="menu-grid">
+                {(() => {
+                  // 1) Clone & enrich the pizza list
+                  const findPizzaByName = (name) =>
+                    pizzaMenu.find(
+                      (pz) =>
+                        pz.name.toLowerCase().includes(name.toLowerCase()) ||
+                        name.toLowerCase().includes(pz.name.toLowerCase())
+                    );
+
+                  const enhanced = pizzaMenu.map((pz) => ({
+                    ...pz,
+                    isRecommended: false,
+                    recommendationTitle: null,
+                    recommendationAction: null,
+                  }));
+
+                  // 2) Mark & sort recommendations if signed in
+                  if (isSignedIn && recommendations.length) {
+                    recommendations.forEach((rec) => {
+                      const match = findPizzaByName(rec.subtitle);
+                      if (match) {
+                        const target = enhanced.find((e) => e.name === match.name);
+                        if (target) {
+                          target.isRecommended = true;
+                          target.recommendationTitle = rec.title;
+                          target.recommendationAction = rec.action || 'Add to Cart';
+                        }
+                      }
+                    });
+                    const recs = enhanced.filter((e) => e.isRecommended);
+                    const others = enhanced.filter((e) => !e.isRecommended);
+                    return [...recs, ...others];
+                  }
+
+                  // 3) Fallback: original order
+                  return enhanced;
+                })().map((pizza) => (
+                  <div key={pizza.id} className="pizza-card">
+                    <div className="pizza-image-container">
+                      <img
+                        src={pizza.img}
+                        alt={pizza.name}
+                        className="pizza-image"
+                      />
+                      {pizza.isRecommended && (
+                        <div className="favorite-ribbon subtle">
+                          💛 You liked this before!
+                        </div>
+                      )}
+                    </div>
+                    <div className="pizza-content">
+                      <h3 className="pizza-title">{pizza.name}</h3>
+                      <p className="pizza-description">{pizza.desc}</p>
+                    </div>
+                    <div className="pizza-footer">
+                      <span className="pizza-price">${pizza.price}</span>
+                      <button
+                        className={`add-to-cart-btn ${
+                          pizza.isRecommended ? 'order-again' : ''
+                        }`}
+                        onClick={() => addToCart(pizza)}
+                      >
+                        {pizza.isRecommended ? 'Order Again' : 'Add to Cart'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {currentView === 'menu' ? (
-        <div className="main-content-container">
-          {/* Menu Section Header */}
-          <div className="menu-section-header">
-            <SignedIn>
-              {recommendations.length > 0 ? (
-                <div className="personalized-section">
-                  <h1 className="menu-page-title">🍕 Your Picks</h1>
-                </div>
-              ) : (
-                <h1 className="menu-page-title">Our Menu</h1>
-              )}
-            </SignedIn>
-            <SignedOut>
-              <h1 className="menu-page-title">Our Menu</h1>
-            </SignedOut>
-          </div>
-            <div className="menu-grid">
-              {(() => {
-                // Helper function to find pizza by recommendation name
-                const findPizzaByName = (name) => {
-                  return pizzaMenu.find(pizza => 
-                    pizza.name.toLowerCase().includes(name.toLowerCase()) ||
-                    name.toLowerCase().includes(pizza.name.toLowerCase())
-                  );
-                };
 
-                // Create enhanced pizza array with recommendation data
-                const enhancedPizzaMenu = pizzaMenu.map(pizza => ({
-                  ...pizza,
-                  isRecommended: false,
-                  recommendationTitle: null,
-                  recommendationAction: null
-                }));
 
-                // Mark recommended pizzas only for authenticated users
-                if (isSignedIn && recommendations.length > 0) {
-                  recommendations.forEach(rec => {
-                    const matchingPizza = findPizzaByName(rec.subtitle);
-                    if (matchingPizza) {
-                      const enhancedPizza = enhancedPizzaMenu.find(p => p.name === matchingPizza.name);
-                      if (enhancedPizza) {
-                        enhancedPizza.isRecommended = true;
-                        enhancedPizza.recommendationTitle = rec.title;
-                        enhancedPizza.recommendationAction = rec.action || 'Add to Cart';
-                      }
-                    }
-                  });
 
-                  // Sort to show recommended pizzas first
-                  const recommendedPizzas = enhancedPizzaMenu.filter(p => p.isRecommended);
-                  const nonRecommendedPizzas = enhancedPizzaMenu.filter(p => !p.isRecommended);
-                  return [...recommendedPizzas, ...nonRecommendedPizzas];
-                }
 
-                return enhancedPizzaMenu;
-              })().map((pizza) => (
-                <div key={pizza.id} className="pizza-card">
-                  <div className="pizza-image-container">
-                    <img 
-                      src={pizza.img} 
-                      alt={pizza.name}
-                      className="pizza-image"
-                    />
-                    {/* Personalization Ribbon */}
-                    {pizza.isRecommended && (
-                      <div className="favorite-ribbon subtle">
-                        💛 You liked this before!
-                      </div>
-                    )}
-                  </div>
-                  <div className="pizza-content">
-                    <h3 className="pizza-title">{pizza.name}</h3>
-                    <p className="pizza-description">{pizza.desc}</p>
-                  </div>
-                  <div className="pizza-footer">
-                    <span className="pizza-price">{pizza.price}</span>
-                    <button 
-                      className={`add-to-cart-btn ${pizza.isRecommended ? 'order-again' : ''}`}
-                      onClick={() => addToCart(pizza)}
-                    >
-                      {pizza.isRecommended ? 'Order Again' : 'Add to Cart'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-        </div>
-      ) : (
-        /* Orders View - Only for authenticated users */
+      
+
+
+      {/* ─── ORDERS VIEW ─────────────────────────── */}
+      {currentView === 'orders' && (
         <SignedIn>
-          <div className="main-content-container">
-            {/* My Orders Section Header */}
-            <div className="menu-section-header">
-              <h1 className="menu-page-title">My Orders</h1>
-            </div>
+          <div className="main-content-container orders-view">
             <MyOrders onBackToMenu={() => setCurrentView('menu')} />
           </div>
         </SignedIn>
       )}
 
+      
       {/* Cart Drawer */}
       <div className={`cart-drawer-overlay ${isCartOpen ? 'open' : ''}`} onClick={() => setIsCartOpen(false)} />
       <div className={`cart-drawer ${isCartOpen ? 'open' : ''}`}>
@@ -505,7 +668,7 @@ function App() {
                 />
                 <div className="cart-item-details">
                   <div className="cart-item-name">{item.name}</div>
-                  <div className="cart-item-price">{item.price}</div>
+                  <div className="cart-item-price">${item.price}</div>
                 </div>
                 <div className="quantity-controls">
                   <button 
@@ -531,7 +694,7 @@ function App() {
           <div className="cart-footer">
             <div className="cart-total">
               <span>Total:</span>
-              <span>${getCartTotal().toLocaleString()}</span>
+              <span>${getCartTotal().toFixed(2)}</span>
             </div>
             <button className="checkout-btn" onClick={handleCheckout}>
               Proceed to Checkout
@@ -677,7 +840,7 @@ const GuestCheckoutModal = ({ cart, total, onCheckout, onClose }) => {
               fontSize: '0.875rem'
             }}>
               <span>{item.name} x{item.quantity}</span>
-              <span>${(parseFloat(item.price.replace('$', '').replace(',', '')) * item.quantity).toLocaleString()}</span>
+              <span>${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
             </div>
           ))}
           <div style={{ 

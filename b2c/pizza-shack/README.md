@@ -78,42 +78,12 @@ All pizza images must be in **1:1 square ratio** format for consistent display a
 - **Customer Data Platform**: Choreo CDP REST API
 - **Storage**: Browser localStorage with fallback support
 
-### Authentication SDK Migration
-
-This application has been upgraded from `@asgardeo/auth-react` to the new `@asgardeo/react` SDK v0.5.12. Key improvements include:
-
 #### New SDK Features
 
 - **Built-in Components**: `SignedIn`, `SignedOut`, `SignInButton`, `UserDropdown`
 - **Simplified Configuration**: Direct props instead of config objects
 - **Enhanced UI**: Modern, accessible authentication components
 - **Better TypeScript Support**: Improved type definitions and IntelliSense
-
-#### Migration Changes
-
-```jsx
-// Old SDK (auth-react)
-import { AuthProvider, useAuthContext } from '@asgardeo/auth-react'
-
-<AuthProvider config={{
-  signInRedirectURL: 'http://localhost:5173',
-  signOutRedirectURL: 'http://localhost:5173',
-  clientID: 'your-client-id',
-  baseUrl: 'https://api.asgardeo.io/t/your-org',
-  scope: ['openid', 'profile']
-}}>
-
-// New SDK (@asgardeo/react)
-import { AsgardeoProvider, SignedIn, SignedOut, SignInButton, UserDropdown } from '@asgardeo/react'
-
-<AsgardeoProvider
-  clientId='your-client-id'
-  baseUrl='https://api.asgardeo.io/t/your-org'
-  preferences={{
-    theme: { mode: 'light' }
-  }}
->
-```
 
 #### Authentication UI Components
 
