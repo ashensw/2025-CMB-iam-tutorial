@@ -59,13 +59,13 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
         // Add connection message immediately
         setMessages(prev => {
           const hasConnectionMessage = prev.some(msg => 
-            msg.content.includes('Connected to Pizza Shack AI agent!')
+            msg.content.includes('Connected to Pizza Shack AI Assistant!')
           );
           
           if (!hasConnectionMessage) {
             const connectionMessage = {
               id: Date.now().toString(),
-              content: '🔗 Connected to Pizza Shack AI agent!',
+              content: '🔗 Connected to Pizza Shack AI Assistant!',
               isUser: false,
               timestamp: new Date(),
               sender: 'assistant'
@@ -87,7 +87,7 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
             if (!hasWelcomeMessage) {
               const welcomeMessage = {
                 id: Date.now().toString(),
-                content: `Hello there! 🍕 Welcome to Pizza Shack! I'm your personal Pizza AI with access to your taste preferences. I can help you reorder favorites, discover new pizzas based on what you've enjoyed before, or explore our full menu. What can I help you with today?`,
+                content: `Hello there! 🍕 Welcome to Pizza Shack! I'm your personal AI Assistant with access to your taste preferences. I can help you reorder favorites, discover new pizzas based on what you've enjoyed before, or explore our full menu. What can I help you with today?`,
                 isUser: false,
                 timestamp: new Date(),
                 sender: 'assistant'
@@ -335,7 +335,7 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
           if (msg.content.includes('Welcome to Pizza Shack!') && msg.content.includes('Hello there!')) {
             return {
               ...msg,
-              content: `Hello ${state.firstName}! 🍕 Welcome to Pizza Shack! I'm your personal Pizza AI with access to your taste preferences. I can help you reorder favorites, discover new pizzas based on what you've enjoyed before, or explore our full menu. What can I help you with today?`
+              content: `Hello ${state.firstName}! 🍕 Welcome to Pizza Shack! I'm your personal AI Assistant with access to your taste preferences. I can help you reorder favorites, discover new pizzas based on what you've enjoyed before, or explore our full menu. What can I help you with today?`
             };
           }
           return msg;

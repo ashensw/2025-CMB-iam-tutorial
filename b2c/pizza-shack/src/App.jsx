@@ -735,7 +735,7 @@ function App() {
       {/* Chat Window - Corner Anchored */}
       <div className={`chat-window ${isChatOpen ? 'open' : ''}`}>
         <div className="chat-header">
-          <span className="chat-title">🤖 Pizza AI Assistant</span>
+          <span className="chat-title">🤖 Pizza Shack AI Assistant</span>
           <button className="close-chat" onClick={() => setIsChatOpen(false)}>
             ×
           </button>
