@@ -15,7 +15,11 @@ from .schemas import (
     TokenInfoResponse
 )
 from .database import MenuItem, Order
-from .dependencies import get_db, validate_token, simple_validate_token, log_request_headers, security, TokenHandler
+from .dependencies import (
+    get_db, validate_token, validate_token_flexible, simple_validate_token, 
+    simple_validate_token_flexible, log_request_headers, security, TokenHandler,
+    get_required_scopes_for_endpoint, ENABLE_TOKEN_LOGGING
+)
 
 logger = logging.getLogger(__name__)
 
@@ -89,13 +93,28 @@ def health_check():
 
 # API routes (with /api prefix)
 @api_router.get("/token-info", response_model=TokenInfoResponse)
-def token_info_endpoint(token_info: TokenInfo = Depends(simple_validate_token)):
-    """Get token information for debugging - no scope validation"""
-    return TokenInfoResponse(
-        user_id=token_info.user_id,
-        token_type=token_info.token_type,
-        agent_id=token_info.agent_id
-    )
+def token_info_endpoint(request: Request):
+    """Get token information for debugging - flexible validation (no scope validation)"""
+    
+    # Try to get token info using flexible validation
+    token_info = simple_validate_token_flexible(request)
+    
+    if token_info:
+        if ENABLE_TOKEN_LOGGING:
+            logger.info(f"🔍 [TOKEN-INFO] Retrieved token info via flexible validation")
+        return TokenInfoResponse(
+            user_id=token_info.user_id,
+            token_type=token_info.token_type,
+            agent_id=token_info.agent_id
+        )
+    else:
+        if ENABLE_TOKEN_LOGGING:
+            logger.info(f"🔍 [TOKEN-INFO] No token found or backend validation disabled")
+        return TokenInfoResponse(
+            user_id="gateway-user",
+            token_type="gateway",
+            agent_id=None
+        )
 
 
 @api_router.get("/menu", response_model=List[MenuItemResponse])
@@ -107,56 +126,22 @@ def get_menu(
 ):
     """Get pizza menu with optional filtering (public endpoint with optional JWT logging)"""
     
-    # Basic logging to confirm this function is called
-    logger.info("🍕 [MENU] Menu endpoint called")
-    logger.info(f"🍕 [MENU] Request from: {request.client.host if request.client else 'Unknown'}")
+    # Enhanced logging for menu endpoint
+    if ENABLE_TOKEN_LOGGING:
+        logger.info("🍕 [MENU] Menu endpoint called")
+        logger.info(f"🍕 [MENU] Request from: {request.client.host if request.client else 'Unknown'}")
+        logger.info(f"🍕 [MENU] Parameters - category: {category}, price_range: {price_range}")
     
-    # Try to log JWT headers if Authorization or X-JWT-Assertion header is present
-    try:
-        auth_header = request.headers.get("Authorization")
-        jwt_assertion_header = request.headers.get("X-JWT-Assertion")
-        
-        tokens_analyzed = []
-        
-        # Analyze Authorization header
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.replace("Bearer ", "")
-            logger.info("🔑 [MENU] Authorization header detected, attempting JWT analysis")
-            
-            try:
-                token_info = TokenHandler.decode_token(token)
-                logger.info(f"✅ [MENU] Authorization JWT decoded successfully:")
-                logger.info(f"  ├─ User ID: {token_info.user_id}")
-                logger.info(f"  ├─ Token Type: {token_info.token_type}")
-                logger.info(f"  ├─ Agent ID: {token_info.agent_id}")
-                logger.info(f"  └─ Scopes: {token_info.scopes}")
-                tokens_analyzed.append("Authorization")
-            except Exception as e:
-                logger.error(f"❌ [MENU] Error processing Authorization JWT: {e}")
-        
-        # Analyze X-JWT-Assertion header
-        if jwt_assertion_header:
-            logger.info("🔑 [MENU] X-JWT-Assertion header detected, attempting JWT analysis")
-            
-            try:
-                assertion_info = TokenHandler.decode_token(jwt_assertion_header)
-                logger.info(f"✅ [MENU] X-JWT-Assertion JWT decoded successfully:")
-                logger.info(f"  ├─ User ID: {assertion_info.user_id}")
-                logger.info(f"  ├─ Token Type: {assertion_info.token_type}")
-                logger.info(f"  ├─ Agent ID: {assertion_info.agent_id}")
-                logger.info(f"  └─ Scopes: {assertion_info.scopes}")
-                tokens_analyzed.append("X-JWT-Assertion")
-            except Exception as e:
-                logger.error(f"❌ [MENU] Error processing X-JWT-Assertion JWT: {e}")
-        
-        # Summary
-        if tokens_analyzed:
-            logger.info(f"📊 [MENU] JWT Analysis Summary: Analyzed {', '.join(tokens_analyzed)} headers")
-        else:
-            logger.info("ℹ️ [MENU] No JWT headers found - accessing as public endpoint")
-            
-    except Exception as e:
-        logger.error(f"❌ [MENU] Error during JWT header analysis: {e}")
+    # Try to analyze JWT headers if present (optional for public endpoint)
+    token_info = simple_validate_token_flexible(request)
+    if token_info and ENABLE_TOKEN_LOGGING:
+        logger.info(f"✅ [MENU] Optional JWT detected and processed:")
+        logger.info(f"  ├─ User ID: {token_info.user_id}")
+        logger.info(f"  ├─ Token Type: {token_info.token_type}")
+        logger.info(f"  ├─ Agent ID: {token_info.agent_id}")
+        logger.info(f"  └─ Scopes: {token_info.scopes}")
+    elif ENABLE_TOKEN_LOGGING:
+        logger.info("ℹ️ [MENU] No JWT headers found - accessing as public endpoint")
     
     query = db.query(MenuItem).filter(MenuItem.available == True)
     
@@ -220,15 +205,16 @@ def system_status():
 def create_order(
     request: Request,
     order_request: CreateOrderRequest,
-    token_data: TokenData = Security(validate_token, scopes=["order:write"]),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    token_data: TokenData = Security(validate_token_flexible, scopes=["order:write"]),
     db: Session = Depends(get_db)
 ):
-    """Create a new order - requires order:write scope"""
+    """Create a new order - requires order:write scope (flexible validation)"""
     
-    # Log request headers for debugging
-    log_request_headers(request, credentials)
-    log_request_details(request, token_data)
+    # Enhanced logging for flexible validation
+    if ENABLE_TOKEN_LOGGING:
+        required_scopes = get_required_scopes_for_endpoint("POST", "/api/orders")
+        logger.info(f"🍕 [ORDER] Creating order - Required scopes: {required_scopes}")
+        logger.info(f"🍕 [ORDER] Token data - User: {token_data.sub}, Agent: {token_data.act.sub}")
     
     if not token_data.sub:
         raise HTTPException(
@@ -305,15 +291,16 @@ def create_order(
 @api_router.get("/orders", response_model=List[OrderResponse])
 def get_user_orders(
     request: Request,
-    token_data: TokenData = Security(validate_token, scopes=["order:read"]),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    token_data: TokenData = Security(validate_token_flexible, scopes=["order:read"]),
     db: Session = Depends(get_db)
 ):
-    """Get orders for the authenticated user - requires order:read scope"""
+    """Get orders for the authenticated user - requires order:read scope (flexible validation)"""
     
-    # Log request headers for debugging
-    log_request_headers(request, credentials)
-    log_request_details(request, token_data)
+    # Enhanced logging for flexible validation
+    if ENABLE_TOKEN_LOGGING:
+        required_scopes = get_required_scopes_for_endpoint("GET", "/api/orders")
+        logger.info(f"🍕 [ORDERS] Getting user orders - Required scopes: {required_scopes}")
+        logger.info(f"🍕 [ORDERS] Token data - User: {token_data.sub}, Agent: {token_data.act.sub}")
     
     user_id = token_data.sub
     
@@ -360,15 +347,16 @@ def get_user_orders(
 def get_order(
     request: Request,
     order_id: str,
-    token_data: TokenData = Security(validate_token, scopes=["order:read"]),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    token_data: TokenData = Security(validate_token_flexible, scopes=["order:read"]),
     db: Session = Depends(get_db)
 ):
-    """Get specific order - user can only access their own orders - requires order:read scope"""
+    """Get specific order - user can only access their own orders - requires order:read scope (flexible validation)"""
     
-    # Log request headers for debugging
-    log_request_headers(request, credentials)
-    log_request_details(request, token_data)
+    # Enhanced logging for flexible validation
+    if ENABLE_TOKEN_LOGGING:
+        required_scopes = get_required_scopes_for_endpoint("GET", f"/api/orders/{order_id}")
+        logger.info(f"🍕 [ORDER] Getting order {order_id} - Required scopes: {required_scopes}")
+        logger.info(f"🍕 [ORDER] Token data - User: {token_data.sub}, Agent: {token_data.act.sub}")
     
     order = db.query(Order).filter(Order.order_id == order_id).first()
     if not order:

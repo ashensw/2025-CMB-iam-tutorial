@@ -151,7 +151,171 @@ def create_order(
 - 403 Forbidden returned if insufficient permissions
 - Scopes extracted from JWT `scope` claim (space-separated string or array)
 
-## 🛠️ Local Development Setup
+## � Authorization Configuration
+
+The Pizza API supports **flexible authorization handling** that can adapt to different deployment environments:
+
+### 🔄 Two Authorization Modes
+
+#### 1. Backend Validation Mode (Default)
+The API validates JWT tokens directly and enforces scope-based authorization:
+
+```bash
+# .env configuration
+ENABLE_BACKEND_TOKEN_VALIDATION=true
+AUTH_HEADER_NAME=Authorization
+ENABLE_TOKEN_LOGGING=true
+```
+
+**Behavior:**
+- ✅ Validates JWT token signature and claims
+- ✅ Enforces scope-based authorization per endpoint
+- ✅ Detailed logging of token analysis
+- ✅ Supports multiple token types (user, agent, OBO)
+
+#### 2. Gateway Authorization Mode (Choreo/API Gateway)
+When deployed with gateway-level OAuth2 enforcement, the backend skips validation:
+
+```bash
+# .env configuration for Choreo deployment
+ENABLE_BACKEND_TOKEN_VALIDATION=false
+AUTH_HEADER_NAME=X-Access-Token
+ENABLE_TOKEN_LOGGING=true
+```
+
+**Behavior:**
+- 🚫 Backend skips JWT validation (gateway handles it)
+- ✅ Creates placeholder token data for business logic
+- ✅ Maintains API compatibility
+- ✅ Logs incoming headers for debugging
+
+### 🎛️ Configuration Options
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `ENABLE_BACKEND_TOKEN_VALIDATION` | boolean | `true` | Toggle JWT validation in backend |
+| `AUTH_HEADER_NAME` | string | `Authorization` | Header name for JWT token extraction |
+| `ENABLE_TOKEN_LOGGING` | boolean | `true` | Enable detailed token logging |
+
+### 📄 OpenAPI Integration
+
+The API automatically validates scopes based on the OpenAPI specification:
+
+```yaml
+# Example from openapi.yaml
+/api/orders:
+  post:
+    security:
+      - BearerAuth: ['order:write']
+  get:
+    security:
+      - BearerAuth: ['order:read']
+```
+
+**Scope Mapping:**
+- `POST /api/orders` → `order:write`
+- `GET /api/orders` → `order:read`
+- `GET /api/orders/{id}` → `order:read`
+- `GET /api/system/status` → *no scopes required*
+
+### 🔐 JWT Validation Methods
+
+The API supports two JWT validation approaches:
+
+#### 1. JWKS Validation (Recommended for Production)
+```bash
+# .env configuration
+ENABLE_BACKEND_TOKEN_VALIDATION=true
+JWKS_URL=https://api.asgardeo.io/t/your-org/oauth2/jwks
+JWT_ALGORITHM=RS256
+JWT_ISSUER=https://api.asgardeo.io/t/your-org/oauth2/token
+JWT_AUDIENCE=pizza-app
+```
+
+**Benefits:**
+- ✅ Automatic key rotation support
+- ✅ Full signature verification
+- ✅ Industry standard approach
+- ✅ Enhanced security
+
+#### 2. Static Secret Key (Development/Testing)
+```bash
+# .env configuration
+ENABLE_BACKEND_TOKEN_VALIDATION=true
+JWT_SECRET_KEY=your-secret-key-here
+JWT_ALGORITHM=HS256
+```
+
+**Note:** JWKS takes precedence if both `JWKS_URL` and `JWT_SECRET_KEY` are provided.
+
+### 🪵 Enhanced Token Logging
+
+When `ENABLE_TOKEN_LOGGING=true`, the API provides comprehensive logging:
+
+**Backend Validation Mode:**
+```log
+🔑 [AUTH DEBUG] Validating JWT token with JWKS: eyJ0eXAiOiJKV1Qi...
+✅ [AUTH DEBUG] Retrieved signing key from JWKS
+✅ [AUTH DEBUG] JWT signature validation successful
+📋 [AUTH DEBUG] JWT payload: {"sub": "user123", "scope": "order:read order:write", ...}
+📊 [AUTH DEBUG] JWT Claims Analysis:
+  ├─ sub (Subject): user123
+  ├─ aud (Audience): pizza-app
+  ├─ iss (Issuer): https://api.asgardeo.io/t/org/oauth2/token
+  ├─ exp (Expires): 1640995200
+  ├─ scope: order:read order:write
+  └─ act (Actor): N/A
+👤 [AUTH DEBUG] Detected User token - User: user123
+✅ [AUTH DEBUG] Token validation successful - all required scopes present
+```
+
+**Gateway Mode:**
+```log
+🔑 [AUTH DEBUG] Decoding JWT token (no validation): eyJ0eXAiOiJKV1Qi...
+✅ [AUTH DEBUG] JWT decoded successfully (no validation)
+🚫 [AUTH DEBUG] Backend validation disabled - using JWT for business context only
+```
+
+### 🚀 Usage Examples
+
+#### Backend Validation Mode (.env)
+```bash
+ENABLE_BACKEND_TOKEN_VALIDATION=true
+AUTH_HEADER_NAME=Authorization
+ENABLE_TOKEN_LOGGING=true
+```
+
+**Request:**
+```bash
+curl -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..." \
+     -X POST http://localhost:8000/api/orders \
+     -d '{"items": [{"menu_item_id": 1, "quantity": 2}]}'
+```
+
+#### Gateway Mode (.env)
+```bash
+ENABLE_BACKEND_TOKEN_VALIDATION=false
+AUTH_HEADER_NAME=X-Access-Token
+ENABLE_TOKEN_LOGGING=true
+```
+
+**Expected Behavior:**
+- Gateway validates JWT and forwards request
+- Backend receives request (potentially without Authorization header)
+- Backend creates placeholder token data and processes business logic
+- All endpoints remain functional
+
+### 🌐 Header Support
+
+The API supports extracting tokens from multiple header formats:
+
+| Header Format | Example | Use Case |
+|--------------|---------|----------|
+| `Authorization: Bearer <token>` | Standard OAuth2 | Direct API access |
+| `X-Access-Token: <token>` | Custom header | API Gateway forwarding |
+| `X-JWT-Assertion: <token>` | Choreo format | WSO2 Choreo deployment |
+
+## �🛠️ Local Development Setup
 
 ### Prerequisites
 
@@ -176,6 +340,53 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your settings
 ```
+
+### Environment Configuration
+
+Create a `.env` file with the following configuration:
+
+```bash
+# Database Configuration
+DATABASE_URL=postgresql://username:password@localhost:5432/pizzashack
+# For local development: DATABASE_URL=sqlite:///./pizza_shack.db
+
+# Server Configuration
+PORT=8000
+HOST=0.0.0.0
+
+# JWT/OAuth2 Configuration
+JWKS_URL=https://api.asgardeo.io/t/your-org/oauth2/jwks
+# Alternative: JWT_SECRET_KEY=your-secret-key-here
+JWT_ALGORITHM=RS256
+JWT_ISSUER=https://api.asgardeo.io/t/your-org/oauth2/token
+JWT_AUDIENCE=pizza-app
+
+# Authorization Configuration (NEW)
+ENABLE_BACKEND_TOKEN_VALIDATION=true
+AUTH_HEADER_NAME=Authorization
+ENABLE_TOKEN_LOGGING=true
+
+# CORS Configuration
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+CORS_METHODS=*
+CORS_HEADERS=*
+CORS_CREDENTIALS=true
+
+# Logging
+LOG_LEVEL=INFO
+
+# WSO2 Choreo Configuration (for deployment)
+CHOREO_PROJECT_ID=your-project-id
+CHOREO_ENVIRONMENT=development
+```
+
+#### Authorization Configuration Options
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `ENABLE_BACKEND_TOKEN_VALIDATION` | Enable/disable backend JWT validation | `true` | `false` (for Choreo) |
+| `AUTH_HEADER_NAME` | Header name for JWT extraction | `Authorization` | `X-Access-Token` |
+| `ENABLE_TOKEN_LOGGING` | Enable detailed token logging | `true` | `false` (production) |
 
 3. **Start the server:**
 
@@ -292,30 +503,71 @@ class OrderResponse(BaseModel):
 
 ### cURL Examples with Scope Testing
 
+**Backend Validation Mode:**
 ```bash
-# Get menu (public endpoint)
-curl http://localhost:8000/api/menu
+# Standard Authorization header
+curl -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..." \
+     -X POST http://localhost:8000/api/orders \
+     -H "Content-Type: application/json" \
+     -d '{"items":[{"menu_item_id":1,"quantity":2}]}'
+```
 
-# Get token info (any valid token)
+**Custom Header Mode:**
+```bash
+# Set AUTH_HEADER_NAME=X-Access-Token
+curl -H "X-Access-Token: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..." \
+     -X POST http://localhost:8000/api/orders \
+     -H "Content-Type: application/json" \
+     -d '{"items":[{"menu_item_id":1,"quantity":2}]}'
+```
+
+**Gateway Mode (ENABLE_BACKEND_TOKEN_VALIDATION=false):**
+```bash
+# No token validation - gateway handles it
+curl -X POST http://localhost:8000/api/orders \
+     -H "Content-Type: application/json" \
+     -d '{"items":[{"menu_item_id":1,"quantity":2}]}'
+```
+
+**Test Authorization Logging:**
+```bash
+# Enable detailed logging: ENABLE_TOKEN_LOGGING=true
 curl -H "Authorization: Bearer your-jwt-token" \
      http://localhost:8000/api/token-info
 
-# Create order (requires order:write scope)
-curl -X POST \
-     -H "Authorization: Bearer your-write-token" \
-     -H "Content-Type: application/json" \
-     -d '{"items":[{"menu_item_id":1,"quantity":2,"size":"large"}]}' \
-     http://localhost:8000/api/orders
+# Check logs for detailed JWT analysis
+```
 
-# Get user orders (requires order:read scope)
-curl -H "Authorization: Bearer your-read-token" \
-     http://localhost:8000/api/orders
+### Testing Different Authorization Scenarios
 
-# Admin endpoints have been removed - not used by pizza-shack frontend
+**Scenario 1: Backend Validation (Local Development)**
+```bash
+# .env configuration
+ENABLE_BACKEND_TOKEN_VALIDATION=true
+AUTH_HEADER_NAME=Authorization
+ENABLE_TOKEN_LOGGING=true
 
-# Test insufficient permissions (should return 403)
-curl -H "Authorization: Bearer token-without-order-scopes" \
-     http://localhost:8000/api/orders
+# Expected: Full JWT validation and scope checking
+```
+
+**Scenario 2: Gateway Mode (Choreo Deployment)**
+```bash
+# .env configuration  
+ENABLE_BACKEND_TOKEN_VALIDATION=false
+AUTH_HEADER_NAME=X-Access-Token
+ENABLE_TOKEN_LOGGING=true
+
+# Expected: No backend validation, placeholder token data
+```
+
+**Scenario 3: Custom Header**
+```bash
+# .env configuration
+ENABLE_BACKEND_TOKEN_VALIDATION=true
+AUTH_HEADER_NAME=X-Custom-Token
+ENABLE_TOKEN_LOGGING=true
+
+# Expected: JWT extracted from X-Custom-Token header
 ```
 
 ### Generate Test Tokens
@@ -403,7 +655,39 @@ spec:
       port: 8000
 ```
 
-2. **Environment Variables:**
+2. **Environment Variables for Different Deployments:**
+
+**Local Development (.env):**
+```bash
+ENABLE_BACKEND_TOKEN_VALIDATION=true
+AUTH_HEADER_NAME=Authorization
+ENABLE_TOKEN_LOGGING=true
+DATABASE_URL=sqlite:///./pizza_shack.db
+```
+
+**Choreo with JWT Forwarding (Hybrid Mode):**
+```bash
+ENABLE_BACKEND_TOKEN_VALIDATION=false
+AUTH_HEADER_NAME=X-JWT-Assertion
+ENABLE_TOKEN_LOGGING=true
+DATABASE_URL=postgresql://prod-url
+```
+
+**Choreo without JWT (Pure Gateway Mode):**
+```bash
+ENABLE_BACKEND_TOKEN_VALIDATION=false
+AUTH_HEADER_NAME=Authorization
+ENABLE_TOKEN_LOGGING=false
+DATABASE_URL=postgresql://prod-url
+```
+
+**Standalone Production (.env):**
+```bash
+ENABLE_BACKEND_TOKEN_VALIDATION=true
+AUTH_HEADER_NAME=Authorization
+ENABLE_TOKEN_LOGGING=false
+DATABASE_URL=postgresql://prod-url
+```
 
 ```bash
 DATABASE_URL=postgresql://user:pass@postgres:5432/pizzashack
@@ -470,7 +754,53 @@ curl -H "Authorization: Bearer token" \
 python -c "import jwt; print(jwt.decode('token', options={'verify_signature': False}))"
 ```
 
-## 📚 References
+## � Troubleshooting Authorization
+
+### Common Issues
+
+**1. 401 Unauthorized in Gateway Mode**
+```bash
+# Problem: Backend validation enabled but no token provided
+# Solution: Disable backend validation for gateway deployment
+ENABLE_BACKEND_TOKEN_VALIDATION=false
+```
+
+**2. Token Not Found in Custom Header**
+```bash
+# Problem: Token sent in wrong header
+# Solution: Check AUTH_HEADER_NAME configuration
+AUTH_HEADER_NAME=X-Access-Token  # Match your gateway configuration
+```
+
+**3. No Token Logging**
+```bash
+# Problem: Not seeing detailed token analysis in logs
+# Solution: Enable token logging
+ENABLE_TOKEN_LOGGING=true
+```
+
+**4. Scope Validation Fails**
+```bash
+# Problem: 403 Forbidden even with valid token
+# Solution: Check if token contains required scopes
+# Required scopes: order:read, order:write
+```
+
+### Debug Commands
+
+```bash
+# Test different authorization modes
+python test_flexible_auth.py
+
+# Check server logs for token analysis
+tail -f logs/api.log | grep "AUTH DEBUG"
+
+# Test with different headers
+curl -H "Authorization: Bearer token" http://localhost:8000/api/token-info
+curl -H "X-Access-Token: token" http://localhost:8000/api/token-info
+```
+
+## �📚 References
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Pydantic Documentation](https://pydantic-docs.helpmanual.io/)
