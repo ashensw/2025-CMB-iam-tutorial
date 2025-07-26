@@ -40,6 +40,7 @@ function App() {
   const [isMenuLoading, setIsMenuLoading] = useState(true);
   const [menuError, setMenuError] = useState(null);
   const menuFetchedRef = useRef(false);
+  const profileLoadedRef = useRef(false);
 
   // Fetch additional user info and manage tokens when authenticated
   useEffect(() => {
@@ -104,14 +105,18 @@ function App() {
 
   // Load user profile and recommendations only for authenticated users
   useEffect(() => {
-    console.log('🔍 Auth status:', { 
-      isSignedIn: isSignedIn,
-      isLoading: isLoading,
-      user: user
-    });
+    // Only log when there's a meaningful change, not on every loading state change
+    if (isLoading === false) {
+      console.log('🔍 Auth status:', { 
+        isSignedIn: isSignedIn,
+        isLoading: isLoading,
+        user: user ? 'User data available' : 'No user data'
+      });
+    }
     
-    if (isSignedIn && !isLoading) {
+    if (isSignedIn && isLoading === false && !profileLoadedRef.current) {
       console.log('✅ Loading user profile for authenticated user...');
+      profileLoadedRef.current = true;
       loadUserProfile();
       
       // Proactive welcome for logged-in users
@@ -124,10 +129,11 @@ function App() {
           setIsChatOpen(true);
         }
       }, 2000); // Delay to allow page to fully load
-    } else if (!isSignedIn && !isLoading) {
+    } else if (isSignedIn === false && isLoading === false) {
       console.log('❌ Clearing recommendations for unauthenticated user...');
       // Clear recommendations for unauthenticated users
       setRecommendations([]);
+      profileLoadedRef.current = false; // Reset flag for next login
     }
   }, [isSignedIn, isLoading]); // Use official hook values directly
 

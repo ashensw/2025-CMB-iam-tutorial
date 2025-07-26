@@ -4,9 +4,15 @@ import './ChatBot.css';
 
 const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () => {} }) => {
   const authContext = useAsgardeo();
+  
   const state = {
     isAuthenticated: authContext?.isAuthenticated || false,
-    username: authContext?.user?.preferred_username || authContext?.user?.username
+    username: authContext?.user?.preferred_username || authContext?.user?.username,
+    firstName: authContext?.user?.name?.givenName || 
+               authContext?.user?.given_name || 
+               authContext?.user?.first_name ||
+               authContext?.user?.firstName ||
+               (typeof authContext?.user?.name === 'string' ? authContext.user.name.split(' ')[0] : null)
   };
   const [isOpen, setIsOpen] = useState(isEmbedded ? true : false);
   const [messages, setMessages] = useState([]);
@@ -27,6 +33,12 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
 
   // Enhanced WebSocket connection with Hotel Agent patterns
   const connectWebSocket = useCallback(() => {
+    // Prevent multiple connections
+    if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+      console.log('WebSocket already connected, skipping connection attempt');
+      return;
+    }
+    
     try {
       const wsUrl = `ws://localhost:8001/chat?session_id=${sessionId}`;
       console.log('Connecting to WebSocket:', wsUrl);
@@ -44,7 +56,7 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
           reconnectTimeoutRef.current = null;
         }
         
-        // Add connection and welcome messages in correct order (only if not already present)
+        // Add connection message immediately
         setMessages(prev => {
           const hasConnectionMessage = prev.some(msg => 
             msg.content.includes('Connected to Pizza Shack AI agent!')
@@ -59,19 +71,34 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
               sender: 'assistant'
             };
             
-            const welcomeMessage = {
-              id: Date.now() + 1,
-              content: `Hello ${state.username || 'there'}! 🍕 Welcome to Pizza Shack! I'm your personal Pizza AI with access to your taste preferences. I can help you reorder favorites, discover new pizzas based on what you've enjoyed before, or explore our full menu. What can I help you with today?`,
-              isUser: false,
-              timestamp: new Date(),
-              sender: 'assistant'
-            };
-            
-            return [connectionMessage, welcomeMessage];
+            return [connectionMessage];
           }
           
           return prev;
         });
+        
+        // Add welcome message with initial greeting
+        setTimeout(() => {
+          setMessages(prev => {
+            const hasWelcomeMessage = prev.some(msg => 
+              msg.content.includes('Welcome to Pizza Shack!')
+            );
+            
+            if (!hasWelcomeMessage) {
+              const welcomeMessage = {
+                id: Date.now().toString(),
+                content: `Hello there! 🍕 Welcome to Pizza Shack! I'm your personal Pizza AI with access to your taste preferences. I can help you reorder favorites, discover new pizzas based on what you've enjoyed before, or explore our full menu. What can I help you with today?`,
+                isUser: false,
+                timestamp: new Date(),
+                sender: 'assistant'
+              };
+              
+              return [...prev, welcomeMessage];
+            }
+            
+            return prev;
+          });
+        }, 100);
       };
 
       ws.onmessage = (event) => {
@@ -213,6 +240,18 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
     setShowOrderConfirmation(false);
     setPendingOrder(null);
     
+    // Send cancellation message to backend to clear pending order state
+    if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+      try {
+        wsConnection.send(JSON.stringify({
+          type: 'order_cancel',
+          session_id: sessionId
+        }));
+      } catch (error) {
+        console.error('Failed to send order cancellation:', error);
+      }
+    }
+    
     const cancelMessage = {
       id: Date.now().toString(),
       content: '❌ Order cancelled. Feel free to ask about our menu or try ordering again!',
@@ -280,12 +319,30 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [isOpen, connectWebSocket]);
+  }, [isOpen]);
 
   // Auto-scroll to bottom
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Update welcome message when user data becomes available
+  useEffect(() => {
+    if (state.firstName && messages.length > 0) {
+      setMessages(prev => {
+        // Find and update the welcome message
+        return prev.map(msg => {
+          if (msg.content.includes('Welcome to Pizza Shack!') && msg.content.includes('Hello there!')) {
+            return {
+              ...msg,
+              content: `Hello ${state.firstName}! 🍕 Welcome to Pizza Shack! I'm your personal Pizza AI with access to your taste preferences. I can help you reorder favorites, discover new pizzas based on what you've enjoyed before, or explore our full menu. What can I help you with today?`
+            };
+          }
+          return msg;
+        });
+      });
+    }
+  }, [state.firstName, messages.length]);
 
   // Handle initial input from parent component
   useEffect(() => {
@@ -573,7 +630,7 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
                   fontWeight: '500'
                 }}
               >
-                Confirm & Login
+                Confirm & Authorize
               </button>
             </div>
           </div>
