@@ -127,7 +127,7 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderDetails, userInfo, onCre
                     fontSize: '0.9rem',
                     fontWeight: '500'
                   }}>
-                    ${item.price}
+                    ${parseFloat(item.price).toFixed(2)}
                   </div>
                 </div>
               ))}

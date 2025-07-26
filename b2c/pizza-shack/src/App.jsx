@@ -604,7 +604,7 @@ function App() {
                       <p className="pizza-description">{pizza.desc}</p>
                     </div>
                     <div className="pizza-footer">
-                      <span className="pizza-price">${pizza.price}</span>
+                      <span className="pizza-price">${parseFloat(pizza.price).toFixed(2)}</span>
                       <button
                         className={`add-to-cart-btn ${
                           pizza.isRecommended ? 'order-again' : ''
@@ -668,7 +668,7 @@ function App() {
                 />
                 <div className="cart-item-details">
                   <div className="cart-item-name">{item.name}</div>
-                  <div className="cart-item-price">${item.price}</div>
+                  <div className="cart-item-price">${parseFloat(item.price).toFixed(2)}</div>
                 </div>
                 <div className="quantity-controls">
                   <button 
@@ -851,7 +851,7 @@ const GuestCheckoutModal = ({ cart, total, onCheckout, onClose }) => {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Total:</span>
-              <span>${parseFloat(total).toLocaleString()}</span>
+              <span>${parseFloat(total).toFixed(2)}</span>
             </div>
           </div>
         </div>
