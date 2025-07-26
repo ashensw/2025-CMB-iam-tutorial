@@ -4,6 +4,7 @@ API routes for Pizza Shack API
 import json
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Security
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timezone
@@ -14,7 +15,7 @@ from .schemas import (
     TokenInfoResponse
 )
 from .database import MenuItem, Order
-from .dependencies import get_db, validate_token, simple_validate_token
+from .dependencies import get_db, validate_token, simple_validate_token, log_request_headers, security
 
 logger = logging.getLogger(__name__)
 
@@ -156,10 +157,13 @@ def create_order(
     request: Request,
     order_request: CreateOrderRequest,
     token_data: TokenData = Security(validate_token, scopes=["order:write"]),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
     """Create a new order - requires order:write scope"""
     
+    # Log request headers for debugging
+    log_request_headers(request, credentials)
     log_request_details(request, token_data)
     
     if not token_data.sub:
@@ -238,10 +242,13 @@ def create_order(
 def get_user_orders(
     request: Request,
     token_data: TokenData = Security(validate_token, scopes=["order:read"]),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
     """Get orders for the authenticated user - requires order:read scope"""
     
+    # Log request headers for debugging
+    log_request_headers(request, credentials)
     log_request_details(request, token_data)
     
     user_id = token_data.sub
@@ -276,10 +283,13 @@ def get_order(
     request: Request,
     order_id: str,
     token_data: TokenData = Security(validate_token, scopes=["order:read"]),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
     """Get specific order - user can only access their own orders - requires order:read scope"""
     
+    # Log request headers for debugging
+    log_request_headers(request, credentials)
     log_request_details(request, token_data)
     
     order = db.query(Order).filter(Order.order_id == order_id).first()
