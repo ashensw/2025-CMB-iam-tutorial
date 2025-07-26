@@ -15,8 +15,8 @@ requests==2.31.0
 
 # AI and ML dependencies
 crewai==0.41.1
-langchain-openai==0.1.13
-openai==1.3.0
+langchain-openai==0.2.1
+openai>=1.13.3,<2.0.0
 
 # AutoGen dependencies for enhanced agent capabilities
 autogen-agentchat>=0.5.7
