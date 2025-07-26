@@ -19,11 +19,7 @@ createRoot(document.getElementById('root')).render(
                 main: 'var(--charcoal)',
                 contrastText: '#ffffff'
               },
-              secondary: {
-                main: '#ff9800',
-                contrastText: '#ffffff'
-              }
-            }
+            },
           }
         }
       }}
