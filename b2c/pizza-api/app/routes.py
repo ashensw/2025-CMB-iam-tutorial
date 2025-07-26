@@ -175,6 +175,17 @@ def get_menu(
     
     result = []
     for item in menu_items:
+        # Parse JSON strings from database
+        try:
+            ingredients = json.loads(item.ingredients) if item.ingredients else []
+        except (json.JSONDecodeError, TypeError):
+            ingredients = []
+            
+        try:
+            size_options = json.loads(item.size_options) if item.size_options else []
+        except (json.JSONDecodeError, TypeError):
+            size_options = []
+        
         result.append(MenuItemResponse(
             id=item.id,
             name=item.name,
@@ -182,8 +193,8 @@ def get_menu(
             price=item.price,
             category=item.category,
             image_url=item.image_url,
-            ingredients=item.ingredients if item.ingredients else [],
-            size_options=item.size_options if item.size_options else [],
+            ingredients=ingredients,
+            size_options=size_options,
             available=item.available
         ))
     
