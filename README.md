@@ -23,6 +23,8 @@ The technical deep dive of this tutorial mainly focuses on managing secure and f
 
 Check the instruction in the [guide](/b2c/README.md) to try out the B2C lab session.
 
+**📋 Technical Architecture**: For detailed technical documentation of the Pizza Shack application architecture, including CrewAI integration, WebSocket implementation, and data flow patterns, see the [Architecture Guide](/b2c/PIZZA_SHACK_ARCHITECTURE_GUIDE.md).
+
 **CIAM for B2B Customer facing applications**
 
 Integrating a B2B Saas app with WSO2 Identity Server and serving self serviced access management and administration for B2B customers.

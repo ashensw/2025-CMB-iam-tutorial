@@ -1,9 +1,0 @@
-{
-  "clientID": "7Sa4ZpRLogSdurZIaHpWBOG4_78a",
-  "baseUrl": "https://api.asgardeo.io/t/jayangak",
-  "signInRedirectURL": "https://localhost:3000",
-  "signOutRedirectURL": "https://localhost:3000",
-  "userPortalURL": "https://myaccount.asgardeo.io/t/jayangak",
-  "scope": [ "openid", "profile", "internal_login"],
-  "identityVerificationProviderId": "9da8d1b2-b809-4773-9d6d-bcc5657c8d5c"
-}

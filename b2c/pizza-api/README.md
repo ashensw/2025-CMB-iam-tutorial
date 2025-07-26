@@ -807,14 +807,5 @@ curl -H "X-Access-Token: token" http://localhost:8000/api/token-info
 - [SQLAlchemy Documentation](https://docs.sqlalchemy.org/)
 - [WSO2 Choreo Documentation](https://wso2.com/choreo/docs/)
 
-## 🔄 Migration from Previous Version
-
-The refactored API maintains **100% backward compatibility** with existing endpoints while providing:
-
-- **Improved Structure**: Modular architecture following FastAPI best practices
-- **Better Validation**: Strong typing with Pydantic models
-- **Enhanced Error Handling**: Consistent error responses
-- **Proper Logging**: Structured logging with request details
-- **Extensible Auth**: Scope-based authorization framework
 
 All existing API consumers will continue to work without changes.
