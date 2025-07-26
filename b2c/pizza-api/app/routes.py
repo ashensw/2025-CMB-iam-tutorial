@@ -15,7 +15,7 @@ from .schemas import (
     TokenInfoResponse
 )
 from .database import MenuItem, Order
-from .dependencies import get_db, validate_token, simple_validate_token, log_request_headers, security
+from .dependencies import get_db, validate_token, simple_validate_token, log_request_headers, security, TokenHandler
 
 logger = logging.getLogger(__name__)
 
@@ -103,17 +103,60 @@ def get_menu(
     request: Request,
     category: Optional[str] = None,
     price_range: Optional[str] = None,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
-    """Get pizza menu with optional filtering (now with JWT logging for testing)"""
+    """Get pizza menu with optional filtering (public endpoint with optional JWT logging)"""
     
     # Basic logging to confirm this function is called
-    logger.info("🍕 [MENU] Menu endpoint called with authentication")
+    logger.info("🍕 [MENU] Menu endpoint called")
     logger.info(f"🍕 [MENU] Request from: {request.client.host if request.client else 'Unknown'}")
     
-    # Log request headers for JWT testing
-    log_request_headers(request, credentials)
+    # Try to log JWT headers if Authorization or X-JWT-Assertion header is present
+    try:
+        auth_header = request.headers.get("Authorization")
+        jwt_assertion_header = request.headers.get("X-JWT-Assertion")
+        
+        tokens_analyzed = []
+        
+        # Analyze Authorization header
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.replace("Bearer ", "")
+            logger.info("🔑 [MENU] Authorization header detected, attempting JWT analysis")
+            
+            try:
+                token_info = TokenHandler.decode_token(token)
+                logger.info(f"✅ [MENU] Authorization JWT decoded successfully:")
+                logger.info(f"  ├─ User ID: {token_info.user_id}")
+                logger.info(f"  ├─ Token Type: {token_info.token_type}")
+                logger.info(f"  ├─ Agent ID: {token_info.agent_id}")
+                logger.info(f"  └─ Scopes: {token_info.scopes}")
+                tokens_analyzed.append("Authorization")
+            except Exception as e:
+                logger.error(f"❌ [MENU] Error processing Authorization JWT: {e}")
+        
+        # Analyze X-JWT-Assertion header
+        if jwt_assertion_header:
+            logger.info("🔑 [MENU] X-JWT-Assertion header detected, attempting JWT analysis")
+            
+            try:
+                assertion_info = TokenHandler.decode_token(jwt_assertion_header)
+                logger.info(f"✅ [MENU] X-JWT-Assertion JWT decoded successfully:")
+                logger.info(f"  ├─ User ID: {assertion_info.user_id}")
+                logger.info(f"  ├─ Token Type: {assertion_info.token_type}")
+                logger.info(f"  ├─ Agent ID: {assertion_info.agent_id}")
+                logger.info(f"  └─ Scopes: {assertion_info.scopes}")
+                tokens_analyzed.append("X-JWT-Assertion")
+            except Exception as e:
+                logger.error(f"❌ [MENU] Error processing X-JWT-Assertion JWT: {e}")
+        
+        # Summary
+        if tokens_analyzed:
+            logger.info(f"📊 [MENU] JWT Analysis Summary: Analyzed {', '.join(tokens_analyzed)} headers")
+        else:
+            logger.info("ℹ️ [MENU] No JWT headers found - accessing as public endpoint")
+            
+    except Exception as e:
+        logger.error(f"❌ [MENU] Error during JWT header analysis: {e}")
     
     query = db.query(MenuItem).filter(MenuItem.available == True)
     
