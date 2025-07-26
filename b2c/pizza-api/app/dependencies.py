@@ -133,23 +133,23 @@ def log_request_headers(request: Request, credentials: HTTPAuthorizationCredenti
     try:
         logger.info(f"🌐 [PIZZA-API] Request Headers Analysis:")
         logger.info(f"  ├─ Authorization: Bearer {credentials.credentials[:20]}...{credentials.credentials[-10:]}")
-    
-    # Log X-JWT-Assertion header if present (common in Choreo/API Gateway)
-    jwt_assertion = request.headers.get("X-JWT-Assertion")
-    if jwt_assertion:
-        jwt_preview = f"{jwt_assertion[:20]}...{jwt_assertion[-10:]}" if len(jwt_assertion) > 30 else jwt_assertion
-        logger.info(f"  ├─ X-JWT-Assertion: {jwt_preview}")
-    else:
-        logger.info(f"  ├─ X-JWT-Assertion: Not present")
-    
-    # Log other common auth headers
-    for header_name in ["X-Forwarded-For", "X-Real-IP", "User-Agent", "X-Request-ID"]:
-        header_value = request.headers.get(header_name)
-        if header_value:
-            # Truncate long header values
-            display_value = header_value[:50] + "..." if len(header_value) > 50 else header_value
-            logger.info(f"  ├─ {header_name}: {display_value}")
-    
+        
+        # Log X-JWT-Assertion header if present (common in Choreo/API Gateway)
+        jwt_assertion = request.headers.get("X-JWT-Assertion")
+        if jwt_assertion:
+            jwt_preview = f"{jwt_assertion[:20]}...{jwt_assertion[-10:]}" if len(jwt_assertion) > 30 else jwt_assertion
+            logger.info(f"  ├─ X-JWT-Assertion: {jwt_preview}")
+        else:
+            logger.info(f"  ├─ X-JWT-Assertion: Not present")
+        
+        # Log other common auth headers
+        for header_name in ["X-Forwarded-For", "X-Real-IP", "User-Agent", "X-Request-ID"]:
+            header_value = request.headers.get(header_name)
+            if header_value:
+                # Truncate long header values
+                display_value = header_value[:50] + "..." if len(header_value) > 50 else header_value
+                logger.info(f"  ├─ {header_name}: {display_value}")
+        
         logger.info(f"  └─ Client IP: {request.client.host if request.client else 'N/A'}")
     except Exception as e:
         logger.error(f"❌ [PIZZA-API] Error logging request headers: {e}")
