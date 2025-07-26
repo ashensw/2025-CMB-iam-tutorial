@@ -108,6 +108,10 @@ def get_menu(
 ):
     """Get pizza menu with optional filtering (now with JWT logging for testing)"""
     
+    # Basic logging to confirm this function is called
+    logger.info("🍕 [MENU] Menu endpoint called with authentication")
+    logger.info(f"🍕 [MENU] Request from: {request.client.host if request.client else 'Unknown'}")
+    
     # Log request headers for JWT testing
     log_request_headers(request, credentials)
     
