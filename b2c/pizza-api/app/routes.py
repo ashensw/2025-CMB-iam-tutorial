@@ -327,12 +327,26 @@ def get_user_orders(
     
     result = []
     for order in orders:
+        # Handle items parsing safely - check if it's already a list or needs parsing
+        items_data = order.items
+        if isinstance(items_data, str):
+            try:
+                items_parsed = json.loads(items_data)
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse items JSON for order {order.id}: {items_data}")
+                items_parsed = []
+        elif isinstance(items_data, list):
+            items_parsed = items_data
+        else:
+            logger.warning(f"Unexpected items data type for order {order.id}: {type(items_data)}")
+            items_parsed = []
+            
         result.append(OrderResponse(
             id=order.id,
             order_id=order.order_id,
             user_id=order.user_id,
             agent_id=order.agent_id,
-            items=json.loads(order.items),
+            items=items_parsed,
             total_amount=order.total_amount,
             status=order.status,
             token_type=order.token_type,
@@ -369,12 +383,26 @@ def get_order(
             detail="Access denied: You can only access your own orders"
         )
     
+    # Handle items parsing safely - check if it's already a list or needs parsing
+    items_data = order.items
+    if isinstance(items_data, str):
+        try:
+            items_parsed = json.loads(items_data)
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse items JSON for order {order.id}: {items_data}")
+            items_parsed = []
+    elif isinstance(items_data, list):
+        items_parsed = items_data
+    else:
+        logger.warning(f"Unexpected items data type for order {order.id}: {type(items_data)}")
+        items_parsed = []
+
     return OrderResponse(
         id=order.id,
         order_id=order.order_id,
         user_id=order.user_id,
         agent_id=order.agent_id,
-        items=json.loads(order.items),
+        items=items_parsed,
         total_amount=order.total_amount,
         status=order.status,
         token_type=order.token_type,
