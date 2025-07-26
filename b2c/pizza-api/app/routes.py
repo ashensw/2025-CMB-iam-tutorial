@@ -100,11 +100,17 @@ def token_info_endpoint(token_info: TokenInfo = Depends(simple_validate_token)):
 
 @api_router.get("/menu", response_model=List[MenuItemResponse])
 def get_menu(
+    request: Request,
     category: Optional[str] = None,
     price_range: Optional[str] = None,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
-    """Get pizza menu with optional filtering (public endpoint)"""
+    """Get pizza menu with optional filtering (now with JWT logging for testing)"""
+    
+    # Log request headers for JWT testing
+    log_request_headers(request, credentials)
+    
     query = db.query(MenuItem).filter(MenuItem.available == True)
     
     if category:
