@@ -3,7 +3,7 @@ FastAPI dependency injection for authentication and database sessions
 """
 import jwt
 import logging
-from fastapi import Depends, HTTPException, status, Security
+from fastapi import Depends, HTTPException, status, Security, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, SecurityScopes
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -110,11 +110,37 @@ class TokenHandler:
             raise ValueError(f"Token processing failed: {e}")
 
 
-def get_token_info(credentials: HTTPAuthorizationCredentials = Depends(security)) -> TokenInfo:
+def get_token_info(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request = None
+) -> TokenInfo:
     """
     Extract token information from Authorization header.
     No validation performed - only decoding for user context.
     """
+    # Log all relevant headers for debugging
+    if request:
+        logger.info(f"🌐 [PIZZA-API] Request Headers Analysis:")
+        logger.info(f"  ├─ Authorization: Bearer {credentials.credentials[:20]}...{credentials.credentials[-10:]}")
+        
+        # Log X-JWT-Assertion header if present (common in Choreo/API Gateway)
+        jwt_assertion = request.headers.get("X-JWT-Assertion")
+        if jwt_assertion:
+            jwt_preview = f"{jwt_assertion[:20]}...{jwt_assertion[-10:]}" if len(jwt_assertion) > 30 else jwt_assertion
+            logger.info(f"  ├─ X-JWT-Assertion: {jwt_preview}")
+        else:
+            logger.info(f"  ├─ X-JWT-Assertion: Not present")
+        
+        # Log other common auth headers
+        for header_name in ["X-Forwarded-For", "X-Real-IP", "User-Agent", "X-Request-ID"]:
+            header_value = request.headers.get(header_name)
+            if header_value:
+                # Truncate long header values
+                display_value = header_value[:50] + "..." if len(header_value) > 50 else header_value
+                logger.info(f"  ├─ {header_name}: {display_value}")
+        
+        logger.info(f"  └─ Client IP: {request.client.host if request.client else 'N/A'}")
+    
     token = credentials.credentials
     
     try:
@@ -130,13 +156,14 @@ def get_token_info(credentials: HTTPAuthorizationCredentials = Depends(security)
 
 def validate_token(
     security_scopes: SecurityScopes,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request = Depends()
 ) -> TokenData:
     """
     Validate token and check scopes similar to hotel API pattern.
     Decodes token (no signature verification) and validates required scopes.
     """
-    token_info = get_token_info(credentials)
+    token_info = get_token_info(credentials, request)
     
     # Check that the token has ALL the required scopes
     for scope in security_scopes.scopes:
@@ -158,9 +185,10 @@ def validate_token(
 
 # Backward compatibility function - keep the simple validate_token for endpoints that don't need scopes
 def simple_validate_token(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request = Depends()
 ) -> TokenInfo:
     """
     Simple token validation without scope checking for backward compatibility.
     """
-    return get_token_info(credentials)
+    return get_token_info(credentials, request)

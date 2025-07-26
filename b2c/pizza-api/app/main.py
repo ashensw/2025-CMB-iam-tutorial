@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from datetime import datetime, timezone
 from dotenv import load_dotenv
+import time
 
 from .routes import main_router, api_router
 from .database import init_database
@@ -65,6 +66,30 @@ app.add_middleware(
     allow_methods=get_cors_methods(),
     allow_headers=get_cors_headers(),
 )
+
+
+# Request logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log all incoming requests with detailed information"""
+    start_time = time.time()
+    
+    # Log request details
+    logger.info(f"🚀 [PIZZA-API] Incoming Request:")
+    logger.info(f"  ├─ Method: {request.method}")
+    logger.info(f"  ├─ URL: {request.url}")
+    logger.info(f"  ├─ Path: {request.url.path}")
+    logger.info(f"  ├─ Query Params: {dict(request.query_params)}")
+    logger.info(f"  └─ Client: {request.client.host if request.client else 'N/A'}")
+    
+    # Process the request
+    response = await call_next(request)
+    
+    # Log response details
+    process_time = time.time() - start_time
+    logger.info(f"✅ [PIZZA-API] Response: {response.status_code} | {process_time:.3f}s")
+    
+    return response
 
 
 # Exception handlers
