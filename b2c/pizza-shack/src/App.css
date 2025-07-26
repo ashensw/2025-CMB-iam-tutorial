@@ -101,7 +101,7 @@ html, body {
 
 /* App Container */
 .modern-app {
-  min-height: 100vh;
+  height: 100vh;
   background: var(--bg-primary);
   display: flex;
   flex-direction: column;
@@ -343,7 +343,6 @@ html, body {
   margin: 0 auto;     /* This is the key to CENTERING the content */
   padding: var(--space-8) var(--space-6); /* Better spacing using CSS variables */
   position: relative;
-  margin-top: var(--space-6); /* Add space between header and content */
 }
 
 /* Orders view specific adjustments */
@@ -2055,4 +2054,41 @@ textarea:focus {
   .order-total-header {
     font-size: 1.25rem;
   }
+}
+
+/* SDK Component Style Overrides */
+
+.asgardeo-button {
+  outline: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+  overflow: visible;
+}
+
+.asgardeo-user-dropdown__header .asgardeo-user-dropdown__header-email {
+  color: var(--text-secondary);
+}
+
+.asgardeo-button.asgardeo-button__solid.asgardeo-button__secondary, .asgardeo-button.asgardeo-button__solid.asgardeo-button__primary {
+    border-radius: var(--radius-full);
+}
+
+.asgardeo-button.asgardeo-button__solid.asgardeo-button__secondary {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.asgardeo-button.asgardeo-button__solid.asgardeo-button__secondary:hover {
+    background-color: var(--bg-secondary);
+}
+
+.asgardeo-user-dropdown__menu .asgardeo-user-dropdown__menu-item, .asgardeo-user-dropdown__menu .asgardeo-user-dropdown__menu-item:hover, .asgardeo-user-dropdown__menu .asgardeo-user-dropdown__menu-item:focus{
+  box-shadow: none;
+  transform: none;
+  outline: none;
+  outline-offset: 0;
 }
