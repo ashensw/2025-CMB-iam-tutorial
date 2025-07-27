@@ -275,12 +275,26 @@ def create_order(
     creator = f"agent: {token_data.act.sub}" if token_data.act.sub else "user"
     logger.info(f"Order created: {order_id} for user: {token_data.sub} via {creator}")
     
+    # Handle items parsing safely - check if it's already a list or needs parsing
+    items_data = new_order.items
+    if isinstance(items_data, str):
+        try:
+            items_parsed = json.loads(items_data)
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse items JSON for order {new_order.id}: {items_data}")
+            items_parsed = []
+    elif isinstance(items_data, list):
+        items_parsed = items_data
+    else:
+        logger.warning(f"Unexpected items data type for order {new_order.id}: {type(items_data)}")
+        items_parsed = []
+
     return OrderResponse(
         id=new_order.id,
         order_id=new_order.order_id,
         user_id=new_order.user_id,
         agent_id=new_order.agent_id,
-        items=json.loads(new_order.items),
+        items=items_parsed,
         total_amount=new_order.total_amount,
         status=new_order.status,
         token_type=new_order.token_type,
