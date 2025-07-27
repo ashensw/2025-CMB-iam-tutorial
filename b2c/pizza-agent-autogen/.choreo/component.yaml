@@ -1,0 +1,13 @@
+schemaVersion: 1.1
+
+endpoints:
+
+  - name: pizza-agent-autogen
+    displayName: Pizza Agent AutoGen REST Endpoint
+    service:
+      basePath: /
+      port: 8001
+    type: REST
+    networkVisibilities:
+      - Public
+    schemaFilePath: openapi.yaml

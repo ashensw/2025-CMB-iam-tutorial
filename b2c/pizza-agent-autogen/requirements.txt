@@ -1,0 +1,15 @@
+fastapi==0.115.9
+uvicorn==0.34.2
+autogen_agentchat==0.5.7
+autogen-ext==0.5.7
+python-dotenv==1.0.0
+authlib==1.5.2
+openai==1.79.0
+tiktoken==0.9.0
+cachetools==5.5.2
+requests==2.32.3
+pyotp==2.9.0
+httpx==0.28.1
+pydantic>=2.10.0,<3.0.0
+jinja2==3.1.4
+websockets==13.1
