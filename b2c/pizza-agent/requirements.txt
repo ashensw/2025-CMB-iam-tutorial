@@ -18,10 +18,5 @@ crewai==0.41.1
 langchain-openai>=0.1.7,<0.2.0
 openai>=1.13.3,<2.0.0
 
-# AutoGen dependencies for enhanced agent capabilities
-autogen-agentchat>=0.5.7
-autogen-core
-autogen-ext
-
 # Azure dependencies
 azure-identity==1.15.0
