@@ -6,13 +6,8 @@ import os
 import time
 import logging
 from datetime import datetime, timedelta
-try:
-    from crewai_tools import tool
-except ImportError:
-    try:
-        from crewai.tools import tool
-    except ImportError:
-        from crewai.tools.base_tool import tool
+from crewai.tools import tool
+
 
 logger = logging.getLogger(__name__)
 

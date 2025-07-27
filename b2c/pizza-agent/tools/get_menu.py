@@ -2,13 +2,7 @@ from typing import Optional
 import json
 import requests
 import os
-try:
-    from crewai_tools import tool
-except ImportError:
-    try:
-        from crewai.tools import tool
-    except ImportError:
-        from crewai.tools.base_tool import tool
+from crewai.tools import tool
 
 
 def get_agent_token() -> str:
