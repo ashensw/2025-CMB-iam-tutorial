@@ -228,3 +228,6 @@ coverage.xml
 
 # Logs
 *.log
+
+.venv*
+.serena*

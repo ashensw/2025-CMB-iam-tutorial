@@ -258,7 +258,7 @@ VITE_CDP_BASE_URL=https://your-custom-endpoint.com/v1.0
 ```
 src/
 ├── components/
-│   ├── EnhancedChatBot.jsx      # AI chat integration
+│   ├── ChatBot.jsx      # AI chat integration
 │   ├── PersonalizedRecommendations.jsx  # CDP recommendations UI
 │   └── MyOrders.jsx             # Past orders with creator detection
 ├── services/
