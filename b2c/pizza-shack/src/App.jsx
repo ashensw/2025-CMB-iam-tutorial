@@ -450,7 +450,7 @@ function App() {
       <header className="modern-header">
         <div className="header-content">
           <div className="header-logo" onClick={() => setCurrentView('menu')}>
-            <img src="/images/logo.jpg" alt="Pizza Shack Logo" />
+            <img src="/images/logo.png" alt="Pizza Shack Logo" />
             <h1>Pizza Shack</h1>
           </div>
           
