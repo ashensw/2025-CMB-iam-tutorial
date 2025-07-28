@@ -1,0 +1,58 @@
+{
+    "name": "pizza-shack-riders",
+    "version": "2.0.0",
+    "description": "Pizza Shack Riders - Modern delivery rider registration app with age verification",
+    "keywords": [
+        "Pizza Shack",
+        "Riders",
+        "Delivery",
+        "Asgardeo",
+        "WSO2",
+        "OIDC",
+        "React",
+        "SPA",
+        "Identity Verification",
+        "Onfido",
+        "Age Verification"
+    ],
+    "author": "WSO2",
+    "license": "Apache-2.0",
+    "private": false,
+    "scripts": {
+        "dev": "vite",
+        "start": "vite",
+        "build": "vite build",
+        "lint": "eslint .",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@asgardeo/auth-react": "^5.4.0",
+        "@babel/runtime-corejs3": "^7.20.6",
+        "@mui/icons-material": "^5.13.7",
+        "@mui/material": "^5.13.7",
+        "@onfido/active-video-capture": "^0.28.7",
+        "@onfido/api": "^3.4.0",
+        "@oxygen-ui/react": "^1.13.7",
+        "@oxygen-ui/react-icons": "^1.13.7",
+        "@textea/json-viewer": "^2.14.0",
+        "crypto-browserify": "^3.12.0",
+        "onfido-sdk-ui": "^14.34.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "react-router-dom": "^6.10.0",
+        "stream-browserify": "^3.0.0",
+        "util": "^0.12.5",
+        "vite": "^6.2.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.21.0",
+        "@types/react": "^19.0.10",
+        "@types/react-dom": "^19.0.4",
+        "@vitejs/plugin-react": "^4.3.4",
+        "eslint": "^9.21.0",
+        "eslint-plugin-react-hooks": "^5.1.0",
+        "eslint-plugin-react-refresh": "^0.4.19",
+        "globals": "^15.15.0",
+        "typescript": "^5.5.3"
+    }
+}

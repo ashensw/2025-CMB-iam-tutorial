@@ -1,0 +1,9 @@
+{
+  "clientID": "VbVbQEbOKKfpSq6eLlQ7v_9sUoIa",
+  "baseUrl": "https://api.asgardeo.io/t/wso2conasia",
+  "signInRedirectURL": "http://localhost:5174",
+  "signOutRedirectURL": "http://localhost:5174",
+  "userPortalURL": "https://myaccount.asgardeo.io/t/wso2conasia",
+  "scope": [ "openid", "profile", "email", "address", "phone", "internal_login"],
+  "identityVerificationProviderId": "39149cb1-b32a-4a19-8474-7380950c8a7e"
+}
