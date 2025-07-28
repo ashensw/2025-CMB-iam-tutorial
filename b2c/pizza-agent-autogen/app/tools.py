@@ -120,24 +120,9 @@ async def fetch_menu(token: Optional[OAuthToken] = None) -> dict:
         # Menu data (aligned with existing pizza-agent prices)
         menu_data = {
             "pizzas": [
+                
                 {
                     "id": 1,
-                    "name": "Margherita Classic",
-                    "description": "Timeless classic with vibrant San Marzano tomato sauce, fresh mozzarella, and whole basil leaves",
-                    "price": 12.50,
-                    "category": "classic",
-                    "ingredients": ["Fresh mozzarella", "San Marzano tomato sauce", "Whole basil leaves", "Extra virgin olive oil", "Sea salt"]
-                },
-                {
-                    "id": 2,
-                    "name": "Four Cheese Fusion", 
-                    "description": "A cheese lover's dream with mozzarella, sharp cheddar, Parmesan, and creamy ricotta",
-                    "price": 13.25,
-                    "category": "premium",
-                    "ingredients": ["Mozzarella", "Sharp cheddar", "Parmesan", "Creamy ricotta", "Artisan crust", "Olive oil"]
-                },
-                {
-                    "id": 3,
                     "name": "Tandoori Chicken",
                     "description": "Classic supreme tender tandoori chicken, crisp bell peppers, onions, spiced tomato sauce",
                     "price": 14.99,
@@ -145,7 +130,7 @@ async def fetch_menu(token: Optional[OAuthToken] = None) -> dict:
                     "ingredients": ["Tandoori chicken", "Bell peppers", "Red onions", "Mozzarella cheese", "Spiced tomato sauce", "Indian herbs"]
                 },
                 {
-                    "id": 4,
+                    "id": 2,
                     "name": "Spicy Jaffna Crab",
                     "description": "Rich Jaffna-style crab curry, mozzarella, onions, fiery spice. An exotic coastal delight!",
                     "price": 16.50,
@@ -153,7 +138,7 @@ async def fetch_menu(token: Optional[OAuthToken] = None) -> dict:
                     "ingredients": ["Jaffna crab curry", "Mozzarella cheese", "Red onions", "Chili flakes", "Curry leaves", "Coconut milk base"]
                 },
                 {
-                    "id": 5,
+                    "id": 3,
                     "name": "Curry Chicken & Cashew",
                     "description": "Sri Lankan chicken curry, roasted cashews, mozzarella. Unique flavor profile!",
                     "price": 13.99,
@@ -161,12 +146,28 @@ async def fetch_menu(token: Optional[OAuthToken] = None) -> dict:
                     "ingredients": ["Sri Lankan chicken curry", "Roasted cashews", "Mozzarella cheese", "Curry sauce", "Fresh coriander"]
                 },
                 {
-                    "id": 6,
+                    "id": 4,
                     "name": "Spicy Paneer Veggie",
                     "description": "Vegetarian kick! Marinated paneer, fresh vegetables, zesty spiced tomato base, mozzarella",
                     "price": 13.50,
                     "category": "vegetarian",
                     "ingredients": ["Marinated paneer", "Bell peppers", "Red onions", "Tomatoes", "Mozzarella cheese", "Spiced tomato base"]
+                },
+                {
+                    "id": 5,
+                    "name": "Margherita Classic",
+                    "description": "Timeless classic with vibrant San Marzano tomato sauce, fresh mozzarella, and whole basil leaves",
+                    "price": 12.50,
+                    "category": "classic",
+                    "ingredients": ["Fresh mozzarella", "San Marzano tomato sauce", "Whole basil leaves", "Extra virgin olive oil", "Sea salt"]
+                },
+                {
+                    "id": 6,
+                    "name": "Four Cheese Fusion", 
+                    "description": "A cheese lover's dream with mozzarella, sharp cheddar, Parmesan, and creamy ricotta",
+                    "price": 13.25,
+                    "category": "premium",
+                    "ingredients": ["Mozzarella", "Sharp cheddar", "Parmesan", "Creamy ricotta", "Artisan crust", "Olive oil"]
                 },
                 {
                     "id": 7,
@@ -247,32 +248,32 @@ async def place_pizza_order(pizza_name: str, quantity: int = 1,
     
     # Pizza name to menu item ID mapping
     pizza_mapping = {
-        "Margherita Classic": 1,
-        "margherita": 1, 
-        "margherita classic": 1,
-        "Four Cheese Fusion": 2,
-        "four cheese": 2,
-        "four cheese fusion": 2,
-        "cheese": 2,
-        "Tandoori Chicken": 3,
-        "tandoori": 3,
-        "tandoori chicken": 3,
-        "Spicy Jaffna Crab": 4,
-        "spicy jaffna crab": 4,
-        "jaffna crab": 4,
-        "crab": 4,
-        "Curry Chicken & Cashew": 5,
-        "curry chicken": 5,
-        "curry chicken & cashew": 5,
-        "curry chicken and cashew": 5,
+        "Tandoori Chicken": 1,
+        "tandoori": 1,
+        "tandoori chicken": 1,
+        "Spicy Jaffna Crab": 2,
+        "spicy jaffna crab": 2,
+        "jaffna crab": 2,
+        "crab": 2,
+        "Curry Chicken & Cashew": 3,
+        "curry chicken": 3,
+        "curry chicken & cashew": 3,
+        "curry chicken and cashew": 3,
+        "Spicy Paneer Veggie": 4,
+        "spicy paneer": 4,
+        "spicy paneer veggie": 4,
+        "paneer": 4,
+        "Margherita Classic": 5,
+        "margherita": 5,
+        "margherita classic": 5,
+        "Four Cheese Fusion": 6,
+        "four cheese": 6,
+        "four cheese fusion": 6,
+        "cheese": 6,
         "Hot Butter Prawn": 7,
         "hot butter prawn": 7,
         "butter prawn": 7,
         "prawn": 7,
-        "Spicy Paneer Veggie": 6,
-        "spicy paneer": 6,
-        "spicy paneer veggie": 6,
-        "paneer": 6,
         "Masala Potato & Pea": 8,
         "masala potato": 8,
         "masala potato & pea": 8,

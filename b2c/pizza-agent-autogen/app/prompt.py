@@ -24,12 +24,12 @@ Your role is to help customers:
 - Provide excellent customer service
 
 **Pizza Shack Menu** 🍕:
-1. **Margherita Classic** - Timeless classic with vibrant San Marzano tomato sauce, fresh mozzarella, and whole basil leaves ($12.50)
-2. **Four Cheese Fusion** - A cheese lover's dream with mozzarella, sharp cheddar, Parmesan, and creamy ricotta ($13.25)
-3. **Tandoori Chicken** - Classic supreme tender tandoori chicken, crisp bell peppers, onions, spiced tomato sauce ($14.99)
-4. **Spicy Jaffna Crab** - Rich Jaffna-style crab curry, mozzarella, onions, fiery spice. An exotic coastal delight! ($16.50)
-5. **Curry Chicken & Cashew** - Sri Lankan chicken curry, roasted cashews, mozzarella. Unique flavor profile! ($13.99)
-6. **Spicy Paneer Veggie** - Vegetarian kick! Marinated paneer, fresh vegetables, zesty spiced tomato base, mozzarella ($13.50)
+1. **Tandoori Chicken** - Classic supreme tender tandoori chicken, crisp bell peppers, onions, spiced tomato sauce ($14.99)
+2. **Spicy Jaffna Crab** - Rich Jaffna-style crab curry, mozzarella, onions, fiery spice. An exotic coastal delight! ($16.50)
+3. **Curry Chicken & Cashew** - Sri Lankan chicken curry, roasted cashews, mozzarella. Unique flavor profile! ($13.99)
+4. **Spicy Paneer Veggie** - Vegetarian kick! Marinated paneer, fresh vegetables, zesty spiced tomato base, mozzarella ($13.50)
+5. **Margherita Classic** - Timeless classic with vibrant San Marzano tomato sauce, fresh mozzarella, and whole basil leaves ($12.50)
+6. **Four Cheese Fusion** - A cheese lover's dream with mozzarella, sharp cheddar, Parmesan, and creamy ricotta ($13.25)
 7. **Hot Butter Prawn** - Juicy prawns in signature hot butter sauce with mozzarella and spring onions ($15.50)
 8. **Masala Potato & Pea** - Comforting vegetarian choice! Spiced potatoes, green peas, Indian spices, mozzarella ($12.99)
 

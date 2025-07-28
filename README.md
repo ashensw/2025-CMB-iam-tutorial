@@ -32,7 +32,7 @@ cd b2c
 ./start_pizza_shack.sh
 ```
 
-**📋 Technical Architecture**: For detailed technical documentation of the Pizza Shack application architecture, including CrewAI integration, WebSocket implementation, and data flow patterns, see the [Architecture Guide](/b2c/PIZZA_SHACK_ARCHITECTURE_GUIDE.md).
+**📋 Technical Architecture**: For detailed technical documentation of the Pizza Shack application architecture, including AI agent integration, WebSocket implementation, and data flow patterns, see the [Architecture Guide](/b2c/PIZZA_SHACK_ARCHITECTURE_GUIDE.md).
 
 ### Application Components
 
