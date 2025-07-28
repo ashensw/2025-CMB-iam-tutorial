@@ -23,7 +23,23 @@ The technical deep dive of this tutorial mainly focuses on managing secure and f
 
 Check the instruction in the [guide](/b2c/README.md) to try out the B2C lab session.
 
+## Quick Start - Pizza Shack Application
+
+To start all Pizza Shack services (frontend, API, agent, and riders app):
+
+```bash
+cd b2c
+./start_pizza_shack.sh
+```
+
 **📋 Technical Architecture**: For detailed technical documentation of the Pizza Shack application architecture, including CrewAI integration, WebSocket implementation, and data flow patterns, see the [Architecture Guide](/b2c/PIZZA_SHACK_ARCHITECTURE_GUIDE.md).
+
+### Application Components
+
+1. **Pizza Shack Frontend** - React application (http://localhost:5173/)
+2. **Pizza API** - FastAPI backend for orders and menu (http://localhost:8000/)
+3. **Pizza Agent** - AI-powered chatbot service (http://localhost:8001/)
+4. **Pizza Shack Riders** - React rider management app (http://localhost:5174/)
 
 **CIAM for B2B Customer facing applications**
 
