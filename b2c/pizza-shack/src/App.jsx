@@ -8,6 +8,7 @@ import profileStorage from './utils/profileStorage';
 import pizzaApiClient from './services/pizzaApiClient';
 import tokenManager from './services/tokenManager';
 import { debugTokenScopes, debugAsgardeoConfig } from './utils/tokenDebug';
+import Preloader from './components/PreLoader';
 import './App.css';
 
 function App() {
@@ -437,8 +438,7 @@ function App() {
           flexDirection: 'column',
           gap: '1rem'
         }}>
-          <div className="loading-spinner"></div>
-          <p>Loading Pizza Shack...</p>
+          <Preloader />
         </div>
       </div>
     );
@@ -519,10 +519,7 @@ function App() {
                 gap: '1rem',
               }}
             >
-              <div className="loading-spinner" />
-              <p style={{ color: 'var(--text-secondary)' }}>
-                Loading delicious pizzas...
-              </p>
+              <Preloader />
             </div>
           ) : (
             // ─── Loaded State: Banner, Header, Grid ──────────────────────

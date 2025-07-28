@@ -1225,30 +1225,6 @@ html, body {
   }
 }
 
-/* Loading States */
-.loading-spinner {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--border-light);
-  border-radius: 50%;
-  border-top-color: var(--primary-orange);
-  animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Accessibility */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
 /* Focus States */
 button:focus,
 input:focus,
@@ -2054,6 +2030,18 @@ textarea:focus {
   .order-total-header {
     font-size: 1.25rem;
   }
+}
+
+.preloader {
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
+}
+
+.preloader p {
+  margin-top: var(--space-4);
 }
 
 /* SDK Component Style Overrides */
