@@ -26,8 +26,9 @@ paths:
   /:
     get:
       summary: API information
-      description: Get basic API information and endpoints
+      description: Get basic API information and endpoints (no authentication required)
       operationId: getApiInfo
+      security: []  # Explicitly mark as no security required
       responses:
         "200":
           description: Successful operation
@@ -46,10 +47,11 @@ paths:
   /health:
     get:
       summary: Health check
-      description: Health check endpoint for monitoring
+      description: Health check endpoint for monitoring (no authentication required)
       operationId: healthCheck
       tags:
         - system
+      security: []  # Explicitly mark as no security required
       responses:
         "200":
           description: Service is healthy
@@ -66,10 +68,11 @@ paths:
   /api/menu:
     get:
       summary: Get pizza menu
-      description: Retrieve available pizza menu items with optional filtering
+      description: Retrieve available pizza menu items with optional filtering (no authentication required)
       operationId: getMenu
       tags:
         - menu
+      security: []  # Explicitly mark as no security required
       parameters:
         - name: category
           in: query
