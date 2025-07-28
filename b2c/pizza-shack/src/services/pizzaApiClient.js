@@ -26,8 +26,11 @@ class PizzaApiClient {
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${accessToken}`,
+      'X-JWT-Assertion': accessToken,  // Add JWT assertion header for Pizza API
       ...options.headers
     };
+
+    // Note: Choreo API key is only needed for menu calls, not for authenticated order calls
 
     const config = {
       ...options,
@@ -65,9 +68,16 @@ class PizzaApiClient {
         'Content-Type': 'application/json'
       };
       
-      // Add Authorization header if token is provided
+      // Add Choreo API key header if available
+      const choreoApiKey = import.meta.env.VITE_CHOREO_API_KEY;
+      if (choreoApiKey) {
+        headers['apikey'] = choreoApiKey;
+      }
+      
+      // Add Authorization headers if token is provided
       if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`;
+        headers['X-JWT-Assertion'] = accessToken;  // Add JWT assertion header for Pizza API
       }
       
       const response = await fetch(`${this.baseUrl}/api/menu`, {
@@ -97,12 +107,37 @@ class PizzaApiClient {
    * @returns {Promise<Object[]>}
    */
   async getUserOrders(accessToken) {
-    const response = await this.makeAuthenticatedRequest(
-      '/api/orders',
-      { method: 'GET' },
-      accessToken
-    );
-    return await response.json();
+    if (!accessToken) {
+      throw new Error('Access token is required for authenticated requests');
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+      'X-JWT-Assertion': accessToken,  // Add JWT assertion header for Pizza API
+    };
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/orders`, {
+        method: 'GET',
+        headers
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication required - please sign in');
+        } else if (response.status === 403) {
+          throw new Error('Insufficient permissions for this operation');
+        } else {
+          throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        }
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
   }
 
   /**

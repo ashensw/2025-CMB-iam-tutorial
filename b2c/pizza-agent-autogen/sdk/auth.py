@@ -141,21 +141,13 @@ class AuthManager:
             self.agent_token = self.authenticate_agent_with_agent_credentials()
             logger.debug(f"Agent token initialized: {'Success' if self.agent_token else 'Failed'}")
             
-            # Print agent token for debugging
+            # Log agent token initialization (debug prints removed for cleaner logs)
             if self.agent_token and self.agent_token.get('access_token'):
-                print(f"\n\n***********Agent Token Initialized***************:")
-                print(f"Agent Token: {self.agent_token['access_token']}")
-                print(f"Agent Token Type: {self.agent_token.get('token_type', 'Bearer')}")
-                print("***************************************************\n\n")
+                logger.debug("Agent token initialized successfully")
             else:
-                print(f"\n\n***********Agent Token Initialization Failed***************")
-                print(f"Agent token: {self.agent_token}")
-                print("*********************************************************\n\n")
+                logger.warning("Agent token initialization failed")
         except Exception as e:
             logger.error(f"Failed to initialize agent token: {e}")
-            print(f"\n\n***********Agent Token Initialization Exception***************")
-            print(f"Error: {e}")
-            print("***********************************************************\n\n")
             self.agent_token = None
 
         # Pending authorization requests
@@ -577,6 +569,7 @@ class AuthManager:
             "state": "1234",
             "scope": scopes,
             "response_mode": "direct",
+            "use_basic_auth": "true",  # Enable basic auth for app native flow
             "code_challenge": code_challenge,
             "code_challenge_method": "S256",
             "resource": "pizza_api"
@@ -693,6 +686,7 @@ class AuthManager:
             "state": "pizza_agent_auth",
             "scope": scopes,
             "response_mode": "direct",
+            "use_basic_auth": "true",  # Enable basic auth for app native flow
             "code_challenge": code_challenge,
             "code_challenge_method": "S256"
         }

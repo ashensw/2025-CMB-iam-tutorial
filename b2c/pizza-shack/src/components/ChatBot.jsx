@@ -19,8 +19,21 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [sessionId] = useState(`session_${Date.now()}_${Math.random().toString(36).substring(7)}`);
+  const [sessionId] = useState(() => {
+    // Make session ID persistent across React StrictMode remounts
+    const key = 'pizza_chat_session_id';
+    let storedSessionId = sessionStorage.getItem(key);
+    if (!storedSessionId) {
+      storedSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      sessionStorage.setItem(key, storedSessionId);
+      console.log('🆕 Created new session ID:', storedSessionId);
+    } else {
+      console.log('🔄 Reusing stored session ID:', storedSessionId);
+    }
+    return storedSessionId;
+  });
   const [wsConnection, setWsConnection] = useState(null);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [authPopup, setAuthPopup] = useState(null);
   const [pendingOrder, setPendingOrder] = useState(null);
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false);
@@ -31,7 +44,7 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Enhanced WebSocket connection with Hotel Agent patterns
+  // Enhanced WebSocket connection 
   const connectWebSocket = useCallback(() => {
     // Prevent multiple connections
     if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
@@ -39,7 +52,14 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
       return;
     }
     
+    // Prevent multiple connection attempts
+    if (isConnecting) {
+      console.log('WebSocket connection already in progress, skipping');
+      return;
+    }
+    
     try {
+      setIsConnecting(true);
       const wsUrl = `ws://localhost:8001/chat?session_id=${sessionId}`;
       console.log('Connecting to WebSocket:', wsUrl);
       
@@ -49,6 +69,7 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
         console.log('WebSocket connected successfully');
         setIsConnected(true);
         setIsLoading(false);
+        setIsConnecting(false);
         
         // Clear any reconnection timeout
         if (reconnectTimeoutRef.current) {
@@ -77,28 +98,7 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
           return prev;
         });
         
-        // Add welcome message with initial greeting
-        setTimeout(() => {
-          setMessages(prev => {
-            const hasWelcomeMessage = prev.some(msg => 
-              msg.content.includes('Welcome to Pizza Shack!')
-            );
-            
-            if (!hasWelcomeMessage) {
-              const welcomeMessage = {
-                id: Date.now().toString(),
-                content: `Hello there! 🍕 Welcome to Pizza Shack! I'm your personal AI Assistant with access to your taste preferences. I can help you reorder favorites, discover new pizzas based on what you've enjoyed before, or explore our full menu. What can I help you with today?`,
-                isUser: false,
-                timestamp: new Date(),
-                sender: 'assistant'
-              };
-              
-              return [...prev, welcomeMessage];
-            }
-            
-            return prev;
-          });
-        }, 100);
+        // Backend will send welcome message, no need for frontend to add one
       };
 
       ws.onmessage = (event) => {
@@ -138,6 +138,7 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
       ws.onclose = (event) => {
         console.log('WebSocket disconnected:', event.code, event.reason);
         setIsConnected(false);
+        setIsConnecting(false);
         setWsConnection(null);
         
         // Attempt to reconnect after a delay (unless intentionally closed)
@@ -152,6 +153,7 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
         setIsConnected(false);
+        setIsConnecting(false);
       };
 
       setWsConnection(ws);
@@ -159,8 +161,9 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
     } catch (error) {
       console.error('Failed to create WebSocket connection:', error);
       setIsConnected(false);
+      setIsConnecting(false);
     }
-  }, [sessionId]);
+  }, [sessionId, isConnecting]);
 
   // Handle order confirmation before authentication
   const handleOrderConfirmation = (authData) => {
@@ -318,6 +321,7 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
+      // Keep session ID in storage for reconnections
     };
   }, [isOpen]);
 
@@ -326,23 +330,7 @@ const ChatBot = ({ isEmbedded = false, initialInput = '', onInputCleared = () =>
     scrollToBottom();
   }, [messages]);
 
-  // Update welcome message when user data becomes available
-  useEffect(() => {
-    if (state.firstName && messages.length > 0) {
-      setMessages(prev => {
-        // Find and update the welcome message
-        return prev.map(msg => {
-          if (msg.content.includes('Welcome to Pizza Shack!') && msg.content.includes('Hello there!')) {
-            return {
-              ...msg,
-              content: `Hello ${state.firstName}! 🍕 Welcome to Pizza Shack! I'm your personal AI Assistant with access to your taste preferences. I can help you reorder favorites, discover new pizzas based on what you've enjoyed before, or explore our full menu. What can I help you with today?`
-            };
-          }
-          return msg;
-        });
-      });
-    }
-  }, [state.firstName, messages.length]);
+  // Backend handles welcome messages with user context, no need for frontend to modify them
 
   // Handle initial input from parent component
   useEffect(() => {

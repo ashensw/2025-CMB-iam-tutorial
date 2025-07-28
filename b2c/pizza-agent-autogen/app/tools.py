@@ -23,9 +23,38 @@ load_dotenv()
 pizza_api_base_url = os.environ.get('PIZZA_API_BASE_URL', 'http://localhost:8000')
 
 
+def _format_menu_display(menu_data: dict) -> str:
+    """Helper function to format menu data for display"""
+    formatted_menu = "🍕 **PIZZA SHACK MENU** 🍕\n\n"
+    
+    # Group by category
+    categories = {"classic": "🏆 CLASSIC", "premium": "⭐ PREMIUM", "specialty": "🌶️ SPECIALTY", "vegetarian": "🥬 VEGETARIAN"}
+    
+    for category, emoji_title in categories.items():
+        category_pizzas = [p for p in menu_data.get("pizzas", []) if p.get("category") == category]
+        if category_pizzas:
+            formatted_menu += f"**{emoji_title}**\n"
+            for pizza in category_pizzas:
+                formatted_menu += f"• **{pizza['name']}** - ${pizza['price']:.2f}\n"
+                formatted_menu += f"  _{pizza['description']}_\n"
+                if pizza.get('ingredients'):
+                    ingredients_display = ', '.join(pizza['ingredients'][:3])
+                    if len(pizza['ingredients']) > 3:
+                        ingredients_display += "..."
+                    formatted_menu += f"  🥘 {ingredients_display}\n\n"
+                else:
+                    formatted_menu += "\n"
+    
+    formatted_menu += "All pizzas come in Medium size and include free delivery! 🚚\n"
+    formatted_menu += "Simply say 'Order [Pizza Name]' to place your order! 😊"
+    
+    return formatted_menu
+
+
 async def _get(base_url: str, path: str, bearer_token: str, params: dict = None) -> dict:
     headers = {
         "Authorization": f"Bearer {bearer_token}",
+        "X-JWT-Assertion": bearer_token,  # Add JWT assertion header for Pizza API
         "Accept": "application/json"
     }
 
@@ -38,13 +67,56 @@ async def _get(base_url: str, path: str, bearer_token: str, params: dict = None)
 
 
 async def fetch_menu(token: Optional[OAuthToken] = None) -> dict:
-    """Fetch pizza menu - no authentication required for viewing menu"""
+    """Fetch pizza menu - hybrid approach: try API first, fallback to hardcoded menu"""
     import logging
     
     logger = logging.getLogger(__name__)
-    logger.info("📋 FETCHING MENU")
+    logger.info("📋 FETCHING MENU (Hybrid Approach)")
     
+    # Try to fetch from Pizza API first
     try:
+        logger.info("🌐 Attempting to fetch menu from Pizza API...")
+        
+        async with httpx.AsyncClient() as client:
+            # No authentication required for menu endpoint, but add Choreo API key if available
+            headers = {"Accept": "application/json"}
+            
+            # Add Choreo API key header if configured
+            choreo_api_key = os.environ.get('CHOREO_API_KEY')
+            if choreo_api_key:
+                headers["apikey"] = choreo_api_key
+            
+            url = f"{pizza_api_base_url}/api/menu"
+            
+            logger.info(f"📤 GET {url}")
+            response = await client.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            api_menu_response = response.json()
+            
+            # The API returns an array of pizzas, so we need to wrap it
+            if isinstance(api_menu_response, list):
+                api_menu_data = {"pizzas": api_menu_response}
+            else:
+                api_menu_data = api_menu_response
+                
+            logger.info(f"✅ MENU FETCHED FROM API - {len(api_menu_data.get('pizzas', []))} pizzas available")
+            
+            # Format the API response for display
+            formatted_menu = _format_menu_display(api_menu_data)
+            api_menu_data["formatted_display"] = formatted_menu
+            api_menu_data["source"] = "api"
+            
+            return api_menu_data
+            
+    except Exception as e:
+        logger.warning(f"⚠️ API menu fetch failed: {str(e)}")
+        logger.info("🔄 Falling back to hardcoded menu...")
+    
+    # Fallback to hardcoded menu data
+    try:
+        logger.info("📋 Using hardcoded fallback menu...")
+        
         # Menu data (aligned with existing pizza-agent prices)
         menu_data = {
             "pizzas": [
@@ -115,32 +187,16 @@ async def fetch_menu(token: Optional[OAuthToken] = None) -> dict:
             ]
         }
         
-        # Create formatted menu display
-        formatted_menu = "🍕 **PIZZA SHACK MENU** 🍕\n\n"
-        
-        # Group by category
-        categories = {"classic": "🏆 CLASSIC", "premium": "⭐ PREMIUM", "specialty": "🌶️ SPECIALTY", "vegetarian": "🥬 VEGETARIAN"}
-        
-        for category, emoji_title in categories.items():
-            category_pizzas = [p for p in menu_data["pizzas"] if p["category"] == category]
-            if category_pizzas:
-                formatted_menu += f"**{emoji_title}**\n"
-                for pizza in category_pizzas:
-                    formatted_menu += f"• **{pizza['name']}** - ${pizza['price']:.2f}\n"
-                    formatted_menu += f"  _{pizza['description']}_\n"
-                    formatted_menu += f"  🥘 {', '.join(pizza['ingredients'][:3])}...\n\n"
-        
-        formatted_menu += "All pizzas come in Medium size and include free delivery! 🚚\n"
-        formatted_menu += "Simply say 'Order [Pizza Name]' to place your order! 😊"
-        
-        # Add formatted display to menu data
+        # Format the fallback menu display
+        formatted_menu = _format_menu_display(menu_data)
         menu_data["formatted_display"] = formatted_menu
+        menu_data["source"] = "fallback"
         
-        logger.info(f"✅ MENU FETCHED - {len(menu_data['pizzas'])} pizzas available")
+        logger.info(f"✅ FALLBACK MENU LOADED - {len(menu_data['pizzas'])} pizzas available")
         return menu_data
         
     except Exception as e:
-        logger.error(f"❌ MENU FETCH FAILED - {str(e)}")
+        logger.error(f"❌ CRITICAL: Both API and fallback menu failed - {str(e)}")
         return {"error": f"Failed to fetch menu: {str(e)}"}
 
 
@@ -315,9 +371,10 @@ async def place_pizza_order(pizza_name: str, quantity: int = 1,
     logger.info(f"   └─ Agent ID: {agent_id}")
     
     async with httpx.AsyncClient() as client:
-        # Set the authorization header with the access token
+        # Set the authorization headers with the access token (OBO token)
         headers = {
             "Authorization": f"Bearer {token.access_token}",
+            "X-JWT-Assertion": token.access_token,  # Add JWT assertion header for Pizza API
             "Content-Type": "application/json"
         }
         

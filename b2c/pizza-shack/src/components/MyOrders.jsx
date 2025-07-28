@@ -41,11 +41,16 @@ const MyOrders = ({ onBackToMenu }) => {
         console.log('Attempting fallback to local API...');
         const accessToken = await getAccessToken();
         
+        const headers = {
+          'Authorization': `Bearer ${accessToken}`,
+          'X-JWT-Assertion': accessToken,  // Add JWT assertion header for Pizza API
+          'Content-Type': 'application/json'
+        };
+
+        // Note: Choreo API key is only needed for menu calls, not for authenticated order calls
+
         const response = await fetch('http://localhost:8000/api/orders', {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
+          headers
         });
 
         if (response.ok) {
@@ -101,7 +106,7 @@ const MyOrders = ({ onBackToMenu }) => {
   const SkeletonLoader = () => (
     <div className="orders-grid">
       {[1, 2, 3].map((index) => (
-        <div key={index} className="order-card skeleton-card">
+        <div key={`skeleton-order-${index}`} className="order-card skeleton-card">
           <div className="order-header">
             <div className="order-info">
               <div className="skeleton-line skeleton-title"></div>
@@ -113,7 +118,7 @@ const MyOrders = ({ onBackToMenu }) => {
             <div className="skeleton-line skeleton-heading"></div>
             <div className="items-list">
               {[1, 2].map((itemIndex) => (
-                <div key={itemIndex} className="item-card">
+                <div key={`skeleton-item-${index}-${itemIndex}`} className="item-card">
                   <div className="item-details">
                     <div className="skeleton-line skeleton-item-name"></div>
                     <div className="skeleton-line skeleton-item-meta"></div>
@@ -212,7 +217,7 @@ const MyOrders = ({ onBackToMenu }) => {
                   const creator = getCreatorInfo(order);
                   
                   return (
-                    <div key={order.id} className="order-card">
+                    <div key={`order-${order.id}-${order.order_id}`} className="order-card">
                       {/* Order header with new structure */}
                       <div className="order-header">
                         <div className="order-info">
@@ -241,7 +246,7 @@ const MyOrders = ({ onBackToMenu }) => {
                       <div className="order-items-section">
                         <div className="items-list">
                           {order.items.map((item, index) => (
-                            <div key={index} className="item-row">
+                            <div key={`order-${order.id}-item-${index}-${item.menu_item_id || item.id || Math.random()}`} className="item-row">
                               <div className="item-details">
                                 <div className="item-name">{item.name}</div>
                                 <div className="item-meta">

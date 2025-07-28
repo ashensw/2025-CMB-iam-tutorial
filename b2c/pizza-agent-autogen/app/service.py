@@ -180,7 +180,10 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
     async def message_handler(message: AuthRequestMessage):
         state_mapping[message.state] = session_id
         logger.info(f"WebSocket: Sending auth request for session {session_id}, state {message.state}")
-        await websocket.send_json(message.model_dump())
+        try:
+            await websocket.send_json(message.model_dump())
+        except Exception as e:
+            logger.error(f"Failed to send auth request via WebSocket for session {session_id}: {e}")
 
     # Create a auth manager instance for the chat session (only if not exists)
     auth_manager = auth_managers.get(session_id)
@@ -206,31 +209,37 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
         # Store the auth manager by session_id
         if auth_manager:
             auth_managers[session_id] = auth_manager
+    else:
+        # For existing sessions, update the message handler to use the current WebSocket
+        logger.info(f"🔄 Updating message handler for existing session {session_id}")
+        # Update the message handler for the existing auth manager
+        if hasattr(auth_manager, '_message_handler'):
+            auth_manager._message_handler = message_handler
 
-        # Create the set of tools required for pizza ordering
-        fetch_menu_tool = None
-        place_order_tool = None
-        
-        if auth_manager:
-            fetch_menu_tool = SecureFunctionTool(
-                fetch_menu,
-                description="Fetches the pizza menu with all available pizzas, prices, and descriptions",
-                name="FetchMenuTool",
-                auth=None,  # No authentication required for viewing menu
-                strict=False
-            )
+    # Create the set of tools required for pizza ordering
+    fetch_menu_tool = None
+    place_order_tool = None
+    
+    if auth_manager:
+        fetch_menu_tool = SecureFunctionTool(
+            fetch_menu,
+            description="Fetches the pizza menu with all available pizzas, prices, and descriptions",
+            name="FetchMenuTool",
+            auth=None,  # No authentication required for viewing menu
+            strict=False
+        )
 
-            place_order_tool = SecureFunctionTool(
-                place_pizza_order,
-                description="Places a pizza order for the authenticated user",
-                name="PlacePizzaOrderTool",
-                auth=AuthSchema(auth_manager, AuthConfig(
-                    scopes=["order:write", "openid", "profile"],
-                    token_type=OAuthTokenType.OBO_TOKEN,
-                    resource="pizza_api"
-                )),
-                strict=False
-            )
+        place_order_tool = SecureFunctionTool(
+            place_pizza_order,
+            description="Places a pizza order for the authenticated user",
+            name="PlacePizzaOrderTool",
+            auth=AuthSchema(auth_manager, AuthConfig(
+                scopes=["order:write", "openid", "profile"],
+                token_type=OAuthTokenType.OBO_TOKEN,
+                resource="pizza_api"
+            )),
+            strict=False
+        )
 
     # Create agent instance for the chat session (only if not in demo mode and not cached)
     pizza_assistant = pizza_assistants.get(session_id)
