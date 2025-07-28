@@ -8,7 +8,7 @@ import profileStorage from './utils/profileStorage';
 import pizzaApiClient from './services/pizzaApiClient';
 import tokenManager from './services/tokenManager';
 import { debugTokenScopes, debugAsgardeoConfig } from './utils/tokenDebug';
-import Preloader from './components/PreLoader';
+import Preloader from './components/Preloader';
 import './App.css';
 
 function App() {
