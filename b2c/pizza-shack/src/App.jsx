@@ -494,7 +494,7 @@ function App() {
                     className="login-button"
                     onClick={signIn}
                   >
-                    Login / Sign Up
+                    Sign In
                   </button>
                 )}
               </SignInButton>
